@@ -1,0 +1,39 @@
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/backup-db/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+*.log
+
+# Plugin
+vendor/
+node_modules/
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Composer
+composer.lock
+composer.phar
+
+# Environment
+.env
+.env.local
+
+# Build
+dist/
+build/
+
+# Tests
+.phpunit.result.cache
+coverage/
+
+# Temp files
+*.tmp
+*.bak
+.claude/

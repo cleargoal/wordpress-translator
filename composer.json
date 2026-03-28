@@ -1,0 +1,27 @@
+{
+    "name": "cleargoal/wp-smart-translation-engine",
+    "description": "Multi-provider AI translation for WordPress posts and pages",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Volodymyr Yefremov",
+            "email": "cleargoal01@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WPSTE\\": "includes/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    }
+}
