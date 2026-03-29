@@ -26,6 +26,20 @@ class Admin {
 		add_action( 'add_meta_boxes', array( $this, 'add_translation_metabox' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'wp_ajax_wpste_translate_post', array( $this, 'ajax_translate_post' ) );
+
+		// Taxonomy translation hooks
+		add_action( 'category_edit_form_fields', array( $this, 'add_term_translation_fields' ), 10, 2 );
+		add_action( 'post_tag_edit_form_fields', array( $this, 'add_term_translation_fields' ), 10, 2 );
+		add_action( 'wp_ajax_wpste_translate_term', array( $this, 'ajax_translate_term' ) );
+		add_action( 'wp_ajax_wpste_delete_term_translation', array( $this, 'ajax_delete_term_translation' ) );
+
+		// Add to all public taxonomies
+		$taxonomies = get_taxonomies( array( 'public' => true ), 'names' );
+		foreach ( $taxonomies as $taxonomy ) {
+			if ( ! in_array( $taxonomy, array( 'category', 'post_tag' ), true ) ) {
+				add_action( "{$taxonomy}_edit_form_fields", array( $this, 'add_term_translation_fields' ), 10, 2 );
+			}
+		}
 	}
 
 	/**
@@ -59,6 +73,15 @@ class Admin {
 			'wpste-keys',
 			array( $this, 'render_keys_page' )
 		);
+
+		add_submenu_page(
+			'wpste-settings',
+			__( 'Upgrade', 'wp-smart-translation-engine' ),
+			__( 'Upgrade', 'wp-smart-translation-engine' ),
+			'manage_options',
+			'wpste-upgrade',
+			array( $this, 'render_upgrade_page' )
+		);
 	}
 
 	/**
@@ -81,6 +104,17 @@ class Admin {
 		}
 
 		include WPSTE_PLUGIN_DIR . 'admin/partials/api-keys-page.php';
+	}
+
+	/**
+	 * Render upgrade page
+	 */
+	public function render_upgrade_page(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		include WPSTE_PLUGIN_DIR . 'admin/partials/upgrade-page.php';
 	}
 
 	/**
@@ -140,6 +174,7 @@ class Admin {
 	 * @param string $hook Hook suffix
 	 */
 	public function enqueue_admin_assets( string $hook ): void {
+		// Post translation assets
 		if ( $hook === 'post.php' || $hook === 'post-new.php' ) {
 			wp_enqueue_script(
 				'wpste-admin',
@@ -155,6 +190,35 @@ class Admin {
 				array(
 					'ajax_url' => admin_url( 'admin-ajax.php' ),
 					'nonce' => wp_create_nonce( 'wpste_translate_post' ),
+				)
+			);
+		}
+
+		// Taxonomy translation assets
+		if ( $hook === 'term.php' || $hook === 'edit-tags.php' ) {
+			wp_enqueue_script(
+				'wpste-taxonomy-admin',
+				WPSTE_PLUGIN_URL . 'admin/js/taxonomy-admin.js',
+				array( 'jquery' ),
+				WPSTE_VERSION,
+				true
+			);
+
+			wp_localize_script(
+				'wpste-taxonomy-admin',
+				'wpste_taxonomy',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'wpste_taxonomy_translate' ),
+					'strings'  => array(
+						'select_language' => __( 'Please select a target language.', 'wp-smart-translation-engine' ),
+						'success'         => __( 'Success!', 'wp-smart-translation-engine' ),
+						'error'           => __( 'Error:', 'wp-smart-translation-engine' ),
+						'confirm_delete'  => __( 'Are you sure you want to delete this translation?', 'wp-smart-translation-engine' ),
+						'deleting'        => __( 'Deleting...', 'wp-smart-translation-engine' ),
+						'delete'          => __( 'Delete', 'wp-smart-translation-engine' ),
+						'delete_error'    => __( 'Failed to delete translation.', 'wp-smart-translation-engine' ),
+					),
 				)
 			);
 		}
@@ -191,5 +255,77 @@ class Admin {
 				'edit_link' => get_edit_post_link( $result['post_id'] ),
 			)
 		);
+	}
+
+	/**
+	 * Add translation fields to term edit screen
+	 *
+	 * @param object $term     Term object.
+	 * @param string $taxonomy Taxonomy name.
+	 */
+	public function add_term_translation_fields( $term, string $taxonomy ): void {
+		include WPSTE_PLUGIN_DIR . 'admin/partials/term-metabox.php';
+	}
+
+	/**
+	 * AJAX handler for term translation
+	 */
+	public function ajax_translate_term(): void {
+		check_ajax_referer( 'wpste_taxonomy_translate', 'nonce' );
+
+		if ( ! current_user_can( 'manage_categories' ) ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+		}
+
+		$term_id = absint( $_POST['term_id'] ?? 0 );
+		$target_lang = sanitize_text_field( $_POST['target_lang'] ?? '' );
+
+		if ( ! $term_id || ! $target_lang ) {
+			wp_send_json_error( array( 'message' => 'Invalid parameters' ) );
+		}
+
+		$translator = new \WPSTE\Core\Taxonomy_Translator();
+		$result = $translator->translate_term( $term_id, $target_lang );
+
+		if ( isset( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => $result['error'] ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					/* translators: %s: Translated term name */
+					__( 'Term translated successfully: %s', 'wp-smart-translation-engine' ),
+					$result['translated_name']
+				),
+			)
+		);
+	}
+
+	/**
+	 * AJAX handler for deleting term translation
+	 */
+	public function ajax_delete_term_translation(): void {
+		check_ajax_referer( 'wpste_taxonomy_translate', 'nonce' );
+
+		if ( ! current_user_can( 'manage_categories' ) ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+		}
+
+		$term_id = absint( $_POST['term_id'] ?? 0 );
+		$lang = sanitize_text_field( $_POST['lang'] ?? '' );
+
+		if ( ! $term_id || ! $lang ) {
+			wp_send_json_error( array( 'message' => 'Invalid parameters' ) );
+		}
+
+		$translator = new \WPSTE\Core\Taxonomy_Translator();
+		$deleted = $translator->delete_term_translation( $term_id, $lang );
+
+		if ( ! $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete translation.', 'wp-smart-translation-engine' ) ) );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Translation deleted successfully.', 'wp-smart-translation-engine' ) ) );
 	}
 }

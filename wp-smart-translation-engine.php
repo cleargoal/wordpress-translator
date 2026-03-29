@@ -203,6 +203,7 @@ function wpste_run(): void {
 	require_once WPSTE_PLUGIN_DIR . 'includes/core/class-provider-factory.php';
 	require_once WPSTE_PLUGIN_DIR . 'includes/core/class-translation-manager.php';
 	require_once WPSTE_PLUGIN_DIR . 'includes/core/class-post-translator.php';
+	require_once WPSTE_PLUGIN_DIR . 'includes/core/class-taxonomy-translator.php';
 
 	// Load licensing classes
 	require_once WPSTE_PLUGIN_DIR . 'includes/licensing/class-license-storage.php';
@@ -250,6 +251,11 @@ function wpste_run(): void {
 	require_once WPSTE_PLUGIN_DIR . 'public/class-public.php';
 	$public = new WPSTE\Frontend\PublicFrontend();
 	$public->init();
+
+	// Initialize taxonomy frontend
+	require_once WPSTE_PLUGIN_DIR . 'public/class-taxonomy-frontend.php';
+	$taxonomy_frontend = new WPSTE\Frontend\Taxonomy_Frontend();
+	$taxonomy_frontend->init();
 
 	// Initialize REST API
 	require_once WPSTE_PLUGIN_DIR . 'includes/integrations/class-rest-api.php';

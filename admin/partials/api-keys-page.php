@@ -187,7 +187,7 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 						?>
 					</p>
 					<p>
-						<a href="#" class="button button-primary"><?php echo esc_html__( 'Upgrade Plan', 'wp-smart-translation-engine' ); ?></a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpste-upgrade' ) ); ?>" class="button button-primary"><?php echo esc_html__( 'Upgrade Plan', 'wp-smart-translation-engine' ); ?></a>
 					</p>
 				</div>
 			<?php else : ?>

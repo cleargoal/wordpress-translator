@@ -142,6 +142,30 @@ class Installer {
         ) $charset_collate;";
 		dbDelta( $sql );
 
+		// Term Translations table (for categories, tags, custom taxonomies)
+		$table_name = $wpdb->prefix . 'wpste_term_translations';
+		$sql = "CREATE TABLE $table_name (
+            id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            term_id bigint(20) UNSIGNED NOT NULL,
+            lang_code varchar(10) NOT NULL,
+            translated_name varchar(255) NOT NULL,
+            translated_slug varchar(255) NOT NULL,
+            translated_description text DEFAULT NULL,
+            translation_group varchar(36) DEFAULT NULL,
+            provider_used varchar(50) DEFAULT NULL,
+            api_key_id bigint(20) UNSIGNED DEFAULT NULL,
+            characters_translated int(11) DEFAULT 0,
+            translated_at datetime DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY term_lang (term_id, lang_code),
+            KEY lang_code (lang_code),
+            KEY translation_group (translation_group),
+            KEY provider_used (provider_used)
+        ) $charset_collate;";
+		dbDelta( $sql );
+
 		// Update database version
 		update_option( 'wpste_db_version', self::DB_VERSION );
 	}
