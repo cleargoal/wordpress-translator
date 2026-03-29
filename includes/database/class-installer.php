@@ -9,34 +9,33 @@
 
 namespace WPSTE\Database;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 /**
  * Installer class
  */
-class Installer
-{
-    /**
-     * Database version
-     */
-    const DB_VERSION = '1.0.0';
+class Installer {
 
-    /**
-     * Create all plugin tables
-     */
-    public function create_tables(): void
-    {
-        global $wpdb;
+	/**
+	 * Database version
+	 */
+	const DB_VERSION = '1.0.0';
 
-        $charset_collate = $wpdb->get_charset_collate();
+	/**
+	 * Create all plugin tables
+	 */
+	public function create_tables(): void {
+		global $wpdb;
 
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		$charset_collate = $wpdb->get_charset_collate();
 
-        // API Keys table
-        $table_name = $wpdb->prefix . 'wpste_api_keys';
-        $sql = "CREATE TABLE $table_name (
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		// API Keys table
+		$table_name = $wpdb->prefix . 'wpste_api_keys';
+		$sql = "CREATE TABLE $table_name (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             provider varchar(50) NOT NULL,
             api_key varchar(255) NOT NULL,
@@ -51,11 +50,11 @@ class Installer
             KEY provider (provider),
             KEY is_active (is_active)
         ) $charset_collate;";
-        dbDelta($sql);
+		dbDelta( $sql );
 
-        // Translations table
-        $table_name = $wpdb->prefix . 'wpste_translations';
-        $sql = "CREATE TABLE $table_name (
+		// Translations table
+		$table_name = $wpdb->prefix . 'wpste_translations';
+		$sql = "CREATE TABLE $table_name (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             post_id bigint(20) UNSIGNED NOT NULL,
             source_post_id bigint(20) UNSIGNED DEFAULT NULL,
@@ -75,11 +74,11 @@ class Installer
             KEY translation_group (translation_group),
             KEY status (status)
         ) $charset_collate;";
-        dbDelta($sql);
+		dbDelta( $sql );
 
-        // Licenses table
-        $table_name = $wpdb->prefix . 'wpste_licenses';
-        $sql = "CREATE TABLE $table_name (
+		// Licenses table
+		$table_name = $wpdb->prefix . 'wpste_licenses';
+		$sql = "CREATE TABLE $table_name (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             license_key varchar(255) NOT NULL,
             tier varchar(50) DEFAULT 'free',
@@ -97,11 +96,11 @@ class Installer
             KEY tier (tier),
             KEY status (status)
         ) $charset_collate;";
-        dbDelta($sql);
+		dbDelta( $sql );
 
-        // Features table
-        $table_name = $wpdb->prefix . 'wpste_features';
-        $sql = "CREATE TABLE $table_name (
+		// Features table
+		$table_name = $wpdb->prefix . 'wpste_features';
+		$sql = "CREATE TABLE $table_name (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             feature_slug varchar(100) NOT NULL,
             tier varchar(50) NOT NULL,
@@ -120,11 +119,11 @@ class Installer
             KEY tier (tier),
             KEY status (status)
         ) $charset_collate;";
-        dbDelta($sql);
+		dbDelta( $sql );
 
-        // Quota Alerts table
-        $table_name = $wpdb->prefix . 'wpste_quota_alerts';
-        $sql = "CREATE TABLE $table_name (
+		// Quota Alerts table
+		$table_name = $wpdb->prefix . 'wpste_quota_alerts';
+		$sql = "CREATE TABLE $table_name (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             provider varchar(50) NOT NULL,
             api_key_id bigint(20) UNSIGNED NOT NULL,
@@ -141,21 +140,20 @@ class Installer
             KEY notified (notified),
             KEY resolved (resolved)
         ) $charset_collate;";
-        dbDelta($sql);
+		dbDelta( $sql );
 
-        // Update database version
-        update_option('wpste_db_version', self::DB_VERSION);
-    }
+		// Update database version
+		update_option( 'wpste_db_version', self::DB_VERSION );
+	}
 
-    /**
-     * Check if tables need updating
-     */
-    public function maybe_update_tables(): void
-    {
-        $current_version = get_option('wpste_db_version', '0.0.0');
+	/**
+	 * Check if tables need updating
+	 */
+	public function maybe_update_tables(): void {
+		$current_version = get_option( 'wpste_db_version', '0.0.0' );
 
-        if (version_compare($current_version, self::DB_VERSION, '<')) {
-            $this->create_tables();
-        }
-    }
+		if ( version_compare( $current_version, self::DB_VERSION, '<' ) ) {
+			$this->create_tables();
+		}
+	}
 }

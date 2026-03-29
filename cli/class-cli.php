@@ -1,61 +1,59 @@
 <?php
 namespace WPSTE\CLI;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-class CLI_Commands
-{
-    /**
-     * Translate a post
-     *
-     * ## OPTIONS
-     *
-     * <post_id>
-     * : The post ID to translate
-     *
-     * <target_lang>
-     * : Target language code
-     *
-     * ## EXAMPLES
-     *
-     *     wp wpste translate-post 123 uk
-     *
-     * @param array $args Positional arguments
-     * @param array $assoc_args Associative arguments
-     */
-    public function translate_post($args, $assoc_args)
-    {
-        list($post_id, $target_lang) = $args;
+class CLI_Commands {
 
-        \WP_CLI::log('Starting translation...');
+	/**
+	 * Translate a post
+	 *
+	 * ## OPTIONS
+	 *
+	 * <post_id>
+	 * : The post ID to translate
+	 *
+	 * <target_lang>
+	 * : Target language code
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wpste translate-post 123 uk
+	 *
+	 * @param array $args Positional arguments
+	 * @param array $assoc_args Associative arguments
+	 */
+	public function translate_post( $args, $assoc_args ) {
+		list($post_id, $target_lang) = $args;
 
-        $translator = new \WPSTE\Core\Post_Translator();
-        $result = $translator->translate_post((int)$post_id, $target_lang);
+		\WP_CLI::log( 'Starting translation...' );
 
-        if (isset($result['error'])) {
-            \WP_CLI::error($result['error']);
-        }
+		$translator = new \WPSTE\Core\Post_Translator();
+		$result = $translator->translate_post( (int) $post_id, $target_lang );
 
-        \WP_CLI::success("Translation created! New post ID: {$result['post_id']}");
-    }
+		if ( isset( $result['error'] ) ) {
+			\WP_CLI::error( $result['error'] );
+		}
 
-    /**
-     * List enabled languages
-     *
-     * ## EXAMPLES
-     *
-     *     wp wpste languages
-     */
-    public function languages()
-    {
-        $settings = get_option('wpste_settings', []);
-        $languages = $settings['enabled_languages'] ?? ['en'];
+		\WP_CLI::success( "Translation created! New post ID: {$result['post_id']}" );
+	}
 
-        \WP_CLI::log('Enabled languages:');
-        foreach ($languages as $lang) {
-            \WP_CLI::log("  - {$lang}");
-        }
-    }
+	/**
+	 * List enabled languages
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp wpste languages
+	 */
+	public function languages() {
+		$settings = get_option( 'wpste_settings', array() );
+		$languages = $settings['enabled_languages'] ?? array( 'en' );
+
+		\WP_CLI::log( 'Enabled languages:' );
+		foreach ( $languages as $lang ) {
+			\WP_CLI::log( "  - {$lang}" );
+		}
+	}
 }

@@ -9,298 +9,298 @@
 
 namespace WPSTE\Providers;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 /**
  * DeepL Provider class
  */
-class DeepL_Provider extends Abstract_Translation_Provider
-{
-    /**
-     * API endpoint
-     *
-     * @var string
-     */
-    protected $api_url = 'https://api-free.deepl.com/v2/translate';
+class DeepL_Provider extends Abstract_Translation_Provider {
 
-    /**
-     * Provider name
-     *
-     * @var string
-     */
-    protected $name = 'deepl';
+	/**
+	 * API endpoint
+	 *
+	 * @var string
+	 */
+	protected $api_url = 'https://api-free.deepl.com/v2/translate';
 
-    /**
-     * DeepL language codes mapping
-     *
-     * @var array
-     */
-    protected $deepl_codes = [
-        'uk' => 'UK',
-        'de' => 'DE',
-        'fr' => 'FR',
-        'es' => 'ES',
-        'it' => 'IT',
-        'pt' => 'PT',
-        'pl' => 'PL',
-        'ru' => 'RU',
-        'ja' => 'JA',
-        'zh' => 'ZH',
-        'nl' => 'NL',
-        'sv' => 'SV',
-        'da' => 'DA',
-        'fi' => 'FI',
-        'no' => 'NB',
-        'cs' => 'CS',
-        'el' => 'EL',
-        'ar' => 'AR',
-        'tr' => 'TR',
-        'ko' => 'KO',
-        'he' => 'HE',
-        'hi' => 'HI',
-    ];
+	/**
+	 * Provider name
+	 *
+	 * @var string
+	 */
+	protected $name = 'deepl';
 
-    /**
-     * Translate text
-     *
-     * @param string $text Text to translate
-     * @param string $source_lang Source language code
-     * @param string $target_lang Target language code
-     * @param array $options Additional options
-     * @return array
-     */
-    public function translate(string $text, string $source_lang, string $target_lang, array $options = []): array
-    {
-        if (empty($text)) {
-            return ['error' => 'Empty text provided'];
-        }
+	/**
+	 * DeepL language codes mapping
+	 *
+	 * @var array
+	 */
+	protected $deepl_codes = array(
+		'uk' => 'UK',
+		'de' => 'DE',
+		'fr' => 'FR',
+		'es' => 'ES',
+		'it' => 'IT',
+		'pt' => 'PT',
+		'pl' => 'PL',
+		'ru' => 'RU',
+		'ja' => 'JA',
+		'zh' => 'ZH',
+		'nl' => 'NL',
+		'sv' => 'SV',
+		'da' => 'DA',
+		'fi' => 'FI',
+		'no' => 'NB',
+		'cs' => 'CS',
+		'el' => 'EL',
+		'ar' => 'AR',
+		'tr' => 'TR',
+		'ko' => 'KO',
+		'he' => 'HE',
+		'hi' => 'HI',
+	);
 
-        // Convert language codes to DeepL format
-        $source_deepl = $this->to_deepl_code($source_lang);
-        $target_deepl = $this->to_deepl_code($target_lang);
+	/**
+	 * Translate text
+	 *
+	 * @param string $text Text to translate
+	 * @param string $source_lang Source language code
+	 * @param string $target_lang Target language code
+	 * @param array  $options Additional options
+	 * @return array
+	 */
+	public function translate( string $text, string $source_lang, string $target_lang, array $options = array() ): array {
+		if ( empty( $text ) ) {
+			return array( 'error' => 'Empty text provided' );
+		}
 
-        if (!$target_deepl) {
-            return ['error' => "Unsupported target language: {$target_lang}"];
-        }
+		// Convert language codes to DeepL format
+		$source_deepl = $this->to_deepl_code( $source_lang );
+		$target_deepl = $this->to_deepl_code( $target_lang );
 
-        // Get API keys sorted by quota
-        $keys = $this->key_manager->get_all_keys(true);
+		if ( ! $target_deepl ) {
+			return array( 'error' => "Unsupported target language: {$target_lang}" );
+		}
 
-        if (empty($keys)) {
-            return ['error' => 'No DeepL API keys configured'];
-        }
+		// Get API keys sorted by quota
+		$keys = $this->key_manager->get_all_keys( true );
 
-        // Try each key until one succeeds
-        foreach ($keys as $key_data) {
-            $api_key = $key_data['api_key'];
-            $key_id = $key_data['id'];
+		if ( empty( $keys ) ) {
+			return array( 'error' => 'No DeepL API keys configured' );
+		}
 
-            // Check quota
-            if (!$this->key_manager->has_quota($key_id)) {
-                continue;
-            }
+		// Try each key until one succeeds
+		foreach ( $keys as $key_data ) {
+			$api_key = $key_data['api_key'];
+			$key_id = $key_data['id'];
 
-            $result = $this->make_deepl_request($api_key, $text, $source_deepl, $target_deepl);
+			// Check quota
+			if ( ! $this->key_manager->has_quota( $key_id ) ) {
+				continue;
+			}
 
-            if (!isset($result['error'])) {
-                // Success - update usage
-                $char_count = $this->count_characters($text);
-                $this->key_manager->update_usage($key_id, $char_count);
+			$result = $this->make_deepl_request( $api_key, $text, $source_deepl, $target_deepl );
 
-                return [
-                    'text' => $result['text'],
-                    'api_key_id' => $key_id,
-                    'characters' => $char_count
-                ];
-            }
+			if ( ! isset( $result['error'] ) ) {
+				// Success - update usage
+				$char_count = $this->count_characters( $text );
+				$this->key_manager->update_usage( $key_id, $char_count );
 
-            // Check if quota error
-            if (isset($result['quota_exceeded']) && $result['quota_exceeded']) {
-                // Mark key as exhausted and try next
-                do_action('wpste_quota_exhausted', [
-                    'provider' => $this->name,
-                    'api_key_id' => $key_id
-                ]);
-                continue;
-            }
-        }
+				return array(
+					'text' => $result['text'],
+					'api_key_id' => $key_id,
+					'characters' => $char_count,
+				);
+			}
 
-        return ['error' => 'All DeepL API keys failed or quota exhausted'];
-    }
+			// Check if quota error
+			if ( isset( $result['quota_exceeded'] ) && $result['quota_exceeded'] ) {
+				// Mark key as exhausted and try next
+				do_action(
+					'wpste_quota_exhausted',
+					array(
+						'provider' => $this->name,
+						'api_key_id' => $key_id,
+					)
+				);
+				continue;
+			}
+		}
 
-    /**
-     * Make DeepL API request
-     *
-     * @param string $api_key API key
-     * @param string $text Text to translate
-     * @param string|null $source_lang Source language
-     * @param string $target_lang Target language
-     * @return array
-     */
-    protected function make_deepl_request(string $api_key, string $text, ?string $source_lang, string $target_lang): array
-    {
-        $args = [
-            'headers' => [
-                'Authorization' => 'DeepL-Auth-Key ' . $api_key,
-                'Content-Type' => 'application/json',
-            ],
-            'body' => json_encode([
-                'text' => [$text],
-                'source_lang' => $source_lang,
-                'target_lang' => $target_lang,
-                'preserve_formatting' => true,
-                'tag_handling' => 'html',
-            ]),
-            'timeout' => 30,
-            'method' => 'POST',
-        ];
+		return array( 'error' => 'All DeepL API keys failed or quota exhausted' );
+	}
 
-        $response = wp_remote_request($this->api_url, $args);
+	/**
+	 * Make DeepL API request
+	 *
+	 * @param string      $api_key API key
+	 * @param string      $text Text to translate
+	 * @param string|null $source_lang Source language
+	 * @param string      $target_lang Target language
+	 * @return array
+	 */
+	protected function make_deepl_request( string $api_key, string $text, ?string $source_lang, string $target_lang ): array {
+		$args = array(
+			'headers' => array(
+				'Authorization' => 'DeepL-Auth-Key ' . $api_key,
+				'Content-Type' => 'application/json',
+			),
+			'body' => json_encode(
+				array(
+					'text' => array( $text ),
+					'source_lang' => $source_lang,
+					'target_lang' => $target_lang,
+					'preserve_formatting' => true,
+					'tag_handling' => 'html',
+				)
+			),
+			'timeout' => 30,
+			'method' => 'POST',
+		);
 
-        if (is_wp_error($response)) {
-            return ['error' => $response->get_error_message()];
-        }
+		$response = wp_remote_request( $this->api_url, $args );
 
-        $code = wp_remote_retrieve_response_code($response);
-        $body = wp_remote_retrieve_body($response);
-        $data = json_decode($body, true);
+		if ( is_wp_error( $response ) ) {
+			return array( 'error' => $response->get_error_message() );
+		}
 
-        if ($code === 456) {
-            return ['error' => 'Quota exceeded', 'quota_exceeded' => true];
-        }
+		$code = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
 
-        if ($code !== 200) {
-            $error_message = $data['message'] ?? 'Unknown error';
-            return ['error' => "DeepL API error: {$error_message}"];
-        }
+		if ( $code === 456 ) {
+			return array(
+				'error' => 'Quota exceeded',
+				'quota_exceeded' => true,
+			);
+		}
 
-        if (empty($data['translations'][0]['text'])) {
-            return ['error' => 'No translation returned'];
-        }
+		if ( $code !== 200 ) {
+			$error_message = $data['message'] ?? 'Unknown error';
+			return array( 'error' => "DeepL API error: {$error_message}" );
+		}
 
-        return [
-            'text' => $data['translations'][0]['text'],
-            'detected_source_language' => $data['translations'][0]['detected_source_language'] ?? null
-        ];
-    }
+		if ( empty( $data['translations'][0]['text'] ) ) {
+			return array( 'error' => 'No translation returned' );
+		}
 
-    /**
-     * Translate batch of texts
-     *
-     * @param array $texts Array of texts
-     * @param string $source_lang Source language
-     * @param string $target_lang Target language
-     * @param array $options Options
-     * @return array
-     */
-    public function translate_batch(array $texts, string $source_lang, string $target_lang, array $options = []): array
-    {
-        $results = [];
+		return array(
+			'text' => $data['translations'][0]['text'],
+			'detected_source_language' => $data['translations'][0]['detected_source_language'] ?? null,
+		);
+	}
 
-        foreach ($texts as $text) {
-            $result = $this->translate($text, $source_lang, $target_lang, $options);
-            $results[] = $result;
+	/**
+	 * Translate batch of texts
+	 *
+	 * @param array  $texts Array of texts
+	 * @param string $source_lang Source language
+	 * @param string $target_lang Target language
+	 * @param array  $options Options
+	 * @return array
+	 */
+	public function translate_batch( array $texts, string $source_lang, string $target_lang, array $options = array() ): array {
+		$results = array();
 
-            // Small delay to avoid rate limiting
-            usleep(100000); // 100ms
-        }
+		foreach ( $texts as $text ) {
+			$result = $this->translate( $text, $source_lang, $target_lang, $options );
+			$results[] = $result;
 
-        return ['translations' => $results];
-    }
+			// Small delay to avoid rate limiting
+			usleep( 100000 ); // 100ms
+		}
 
-    /**
-     * Detect language of text
-     *
-     * @param string $text Text to analyze
-     * @return array
-     */
-    public function detect_language(string $text): array
-    {
-        $key_data = $this->key_manager->get_next_key();
+		return array( 'translations' => $results );
+	}
 
-        if (!$key_data) {
-            return ['error' => 'No API key available'];
-        }
+	/**
+	 * Detect language of text
+	 *
+	 * @param string $text Text to analyze
+	 * @return array
+	 */
+	public function detect_language( string $text ): array {
+		$key_data = $this->key_manager->get_next_key();
 
-        // Use translate with EN target to get detected source language
-        $result = $this->make_deepl_request(
-            $key_data['api_key'],
-            substr($text, 0, 500),
-            null,
-            'EN-US'
-        );
+		if ( ! $key_data ) {
+			return array( 'error' => 'No API key available' );
+		}
 
-        if (isset($result['error'])) {
-            return $result;
-        }
+		// Use translate with EN target to get detected source language
+		$result = $this->make_deepl_request(
+			$key_data['api_key'],
+			substr( $text, 0, 500 ),
+			null,
+			'EN-US'
+		);
 
-        $detected = $result['detected_source_language'] ?? null;
+		if ( isset( $result['error'] ) ) {
+			return $result;
+		}
 
-        if (!$detected) {
-            return ['error' => 'Could not detect language'];
-        }
+		$detected = $result['detected_source_language'] ?? null;
 
-        // Convert from DeepL code to our code
-        $language = $this->from_deepl_code($detected);
+		if ( ! $detected ) {
+			return array( 'error' => 'Could not detect language' );
+		}
 
-        return ['language' => $language];
-    }
+		// Convert from DeepL code to our code
+		$language = $this->from_deepl_code( $detected );
 
-    /**
-     * Get supported languages
-     *
-     * @return array
-     */
-    public function get_supported_languages(): array
-    {
-        return array_keys($this->deepl_codes) + ['en'];
-    }
+		return array( 'language' => $language );
+	}
 
-    /**
-     * Check if provider is available
-     *
-     * @return bool
-     */
-    public function is_available(): bool
-    {
-        $keys = $this->key_manager->get_all_keys(true);
-        return !empty($keys);
-    }
+	/**
+	 * Get supported languages
+	 *
+	 * @return array
+	 */
+	public function get_supported_languages(): array {
+		return array_keys( $this->deepl_codes ) + array( 'en' );
+	}
 
-    /**
-     * Convert to DeepL language code
-     *
-     * @param string $lang Our language code
-     * @return string|null DeepL code
-     */
-    protected function to_deepl_code(string $lang): ?string
-    {
-        $lang = $this->normalize_language_code($lang);
+	/**
+	 * Check if provider is available
+	 *
+	 * @return bool
+	 */
+	public function is_available(): bool {
+		$keys = $this->key_manager->get_all_keys( true );
+		return ! empty( $keys );
+	}
 
-        if ($lang === 'en') {
-            return 'EN-US';
-        }
+	/**
+	 * Convert to DeepL language code
+	 *
+	 * @param string $lang Our language code
+	 * @return string|null DeepL code
+	 */
+	protected function to_deepl_code( string $lang ): ?string {
+		$lang = $this->normalize_language_code( $lang );
 
-        return $this->deepl_codes[$lang] ?? null;
-    }
+		if ( $lang === 'en' ) {
+			return 'EN-US';
+		}
 
-    /**
-     * Convert from DeepL language code
-     *
-     * @param string $deepl_code DeepL code
-     * @return string Our code
-     */
-    protected function from_deepl_code(string $deepl_code): string
-    {
-        $deepl_code = strtoupper($deepl_code);
+		return $this->deepl_codes[ $lang ] ?? null;
+	}
 
-        if ($deepl_code === 'EN' || $deepl_code === 'EN-US' || $deepl_code === 'EN-GB') {
-            return 'en';
-        }
+	/**
+	 * Convert from DeepL language code
+	 *
+	 * @param string $deepl_code DeepL code
+	 * @return string Our code
+	 */
+	protected function from_deepl_code( string $deepl_code ): string {
+		$deepl_code = strtoupper( $deepl_code );
 
-        $map = array_flip($this->deepl_codes);
-        return $map[$deepl_code] ?? strtolower($deepl_code);
-    }
+		if ( $deepl_code === 'EN' || $deepl_code === 'EN-US' || $deepl_code === 'EN-GB' ) {
+			return 'en';
+		}
+
+		$map = array_flip( $this->deepl_codes );
+		return $map[ $deepl_code ] ?? strtolower( $deepl_code );
+	}
 }

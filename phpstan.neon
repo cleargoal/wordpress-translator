@@ -1,0 +1,20 @@
+parameters:
+    level: 6
+    paths:
+        - includes
+        - admin
+        - public
+        - cli
+    excludePaths:
+        - vendor
+        - tests
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    ignoreErrors:
+        # WordPress core functions are not defined in our codebase
+        - '#Function (add_action|add_filter|do_action|apply_filters|get_option|update_option|delete_option|add_option) not found#'
+        - '#Function (wp_remote_post|wp_remote_get|wp_remote_request) not found#'
+        - '#Function (sanitize_text_field|sanitize_email|esc_html|esc_attr|esc_url) not found#'
+        - '#Function __(__|_e|_n|_x) not found#'
+        - '#Constant ABSPATH not found#'
+    reportUnmatchedIgnoredErrors: false

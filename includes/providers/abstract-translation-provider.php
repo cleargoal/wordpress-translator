@@ -9,191 +9,189 @@
 
 namespace WPSTE\Providers;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 /**
  * Abstract Translation Provider
  */
-abstract class Abstract_Translation_Provider implements Translation_Provider_Interface
-{
-    /**
-     * Provider name
-     *
-     * @var string
-     */
-    protected $name;
+abstract class Abstract_Translation_Provider implements Translation_Provider_Interface {
 
-    /**
-     * Key manager instance
-     *
-     * @var object
-     */
-    protected $key_manager;
+	/**
+	 * Provider name
+	 *
+	 * @var string
+	 */
+	protected $name;
 
-    /**
-     * Database instance
-     *
-     * @var \WPSTE\Database\Database
-     */
-    protected $database;
+	/**
+	 * Key manager instance
+	 *
+	 * @var object
+	 */
+	protected $key_manager;
 
-    /**
-     * Constructor
-     *
-     * @param object $key_manager Key manager instance
-     */
-    public function __construct($key_manager)
-    {
-        $this->key_manager = $key_manager;
-        $this->database = new \WPSTE\Database\Database();
-    }
+	/**
+	 * Database instance
+	 *
+	 * @var \WPSTE\Database\Database
+	 */
+	protected $database;
 
-    /**
-     * Get provider name
-     *
-     * @return string
-     */
-    public function get_name(): string
-    {
-        return $this->name;
-    }
+	/**
+	 * Constructor
+	 *
+	 * @param object $key_manager Key manager instance
+	 */
+	public function __construct( $key_manager ) {
+		$this->key_manager = $key_manager;
+		$this->database = new \WPSTE\Database\Database();
+	}
 
-    /**
-     * Make HTTP request
-     *
-     * @param string $url URL to request
-     * @param array $args Request arguments
-     * @return array Response with 'body', 'code' keys or 'error'
-     */
-    protected function make_request(string $url, array $args = []): array
-    {
-        $defaults = [
-            'timeout' => 30,
-            'headers' => [
-                'Content-Type' => 'application/json',
-            ],
-        ];
+	/**
+	 * Get provider name
+	 *
+	 * @return string
+	 */
+	public function get_name(): string {
+		return $this->name;
+	}
 
-        $args = wp_parse_args($args, $defaults);
+	/**
+	 * Make HTTP request
+	 *
+	 * @param string $url URL to request
+	 * @param array  $args Request arguments
+	 * @return array Response with 'body', 'code' keys or 'error'
+	 */
+	protected function make_request( string $url, array $args = array() ): array {
+		$defaults = array(
+			'timeout' => 30,
+			'headers' => array(
+				'Content-Type' => 'application/json',
+			),
+		);
 
-        $response = wp_remote_request($url, $args);
+		$args = wp_parse_args( $args, $defaults );
 
-        if (is_wp_error($response)) {
-            return [
-                'error' => $response->get_error_message(),
-                'code' => 'request_failed'
-            ];
-        }
+		$response = wp_remote_request( $url, $args );
 
-        $code = wp_remote_retrieve_response_code($response);
-        $body = wp_remote_retrieve_body($response);
+		if ( is_wp_error( $response ) ) {
+			return array(
+				'error' => $response->get_error_message(),
+				'code' => 'request_failed',
+			);
+		}
 
-        return [
-            'code' => $code,
-            'body' => $body,
-            'headers' => wp_remote_retrieve_headers($response)
-        ];
-    }
+		$code = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
 
-    /**
-     * Log translation usage
-     *
-     * @param int $api_key_id API key ID
-     * @param int $characters Number of characters translated
-     * @return void
-     */
-    protected function log_usage(int $api_key_id, int $characters): void
-    {
-        $this->database->query($this->database->wpdb->prepare(
-            "UPDATE {$this->database->get_table_name('api_keys')}
+		return array(
+			'code' => $code,
+			'body' => $body,
+			'headers' => wp_remote_retrieve_headers( $response ),
+		);
+	}
+
+	/**
+	 * Log translation usage
+	 *
+	 * @param int $api_key_id API key ID
+	 * @param int $characters Number of characters translated
+	 * @return void
+	 */
+	protected function log_usage( int $api_key_id, int $characters ): void {
+		$this->database->query(
+			$this->database->wpdb->prepare(
+				"UPDATE {$this->database->get_table_name('api_keys')}
             SET usage_count = usage_count + 1,
                 characters_used = characters_used + %d,
                 updated_at = NOW()
             WHERE id = %d",
-            $characters,
-            $api_key_id
-        ));
-    }
+				$characters,
+				$api_key_id
+			)
+		);
+	}
 
-    /**
-     * Check if quota exceeded
-     *
-     * @param int $api_key_id API key ID
-     * @return bool True if quota exceeded
-     */
-    protected function is_quota_exceeded(int $api_key_id): bool
-    {
-        $key = $this->database->get_row('api_keys', ['id' => $api_key_id], ARRAY_A);
+	/**
+	 * Check if quota exceeded
+	 *
+	 * @param int $api_key_id API key ID
+	 * @return bool True if quota exceeded
+	 */
+	protected function is_quota_exceeded( int $api_key_id ): bool {
+		$key = $this->database->get_row( 'api_keys', array( 'id' => $api_key_id ), ARRAY_A );
 
-        if (!$key || !$key['quota_limit']) {
-            return false;
-        }
+		if ( ! $key || ! $key['quota_limit'] ) {
+			return false;
+		}
 
-        return $key['characters_used'] >= $key['quota_limit'];
-    }
+		return $key['characters_used'] >= $key['quota_limit'];
+	}
 
-    /**
-     * Get usage statistics
-     *
-     * @return array
-     */
-    public function get_usage_stats(): array
-    {
-        $keys = $this->database->get_results('api_keys', [
-            'provider' => $this->name,
-            'is_active' => 1
-        ], ARRAY_A);
+	/**
+	 * Get usage statistics
+	 *
+	 * @return array
+	 */
+	public function get_usage_stats(): array {
+		$keys = $this->database->get_results(
+			'api_keys',
+			array(
+				'provider' => $this->name,
+				'is_active' => 1,
+			),
+			ARRAY_A
+		);
 
-        $total_characters = 0;
-        $total_requests = 0;
+		$total_characters = 0;
+		$total_requests = 0;
 
-        foreach ($keys as $key) {
-            $total_characters += (int)$key['characters_used'];
-            $total_requests += (int)$key['usage_count'];
-        }
+		foreach ( $keys as $key ) {
+			$total_characters += (int) $key['characters_used'];
+			$total_requests += (int) $key['usage_count'];
+		}
 
-        return [
-            'provider' => $this->name,
-            'total_characters' => $total_characters,
-            'total_requests' => $total_requests,
-            'active_keys' => count($keys)
-        ];
-    }
+		return array(
+			'provider' => $this->name,
+			'total_characters' => $total_characters,
+			'total_requests' => $total_requests,
+			'active_keys' => count( $keys ),
+		);
+	}
 
-    /**
-     * Normalize language code
-     *
-     * @param string $lang Language code
-     * @return string Normalized code
-     */
-    protected function normalize_language_code(string $lang): string
-    {
-        $lang = strtolower(trim($lang));
+	/**
+	 * Normalize language code
+	 *
+	 * @param string $lang Language code
+	 * @return string Normalized code
+	 */
+	protected function normalize_language_code( string $lang ): string {
+		$lang = strtolower( trim( $lang ) );
 
-        // Handle special cases
-        $map = [
-            'ua' => 'uk',  // Ukrainian
-            'en-us' => 'en',
-            'en-gb' => 'en',
-            'pt-br' => 'pt',
-            'pt-pt' => 'pt',
-            'zh-cn' => 'zh',
-            'zh-tw' => 'zh',
-        ];
+		// Handle special cases
+		$map = array(
+			'ua' => 'uk',  // Ukrainian
+			'en-us' => 'en',
+			'en-gb' => 'en',
+			'pt-br' => 'pt',
+			'pt-pt' => 'pt',
+			'zh-cn' => 'zh',
+			'zh-tw' => 'zh',
+		);
 
-        return $map[$lang] ?? $lang;
-    }
+		return $map[ $lang ] ?? $lang;
+	}
 
-    /**
-     * Count characters in text
-     *
-     * @param string $text Text to count
-     * @return int Character count
-     */
-    protected function count_characters(string $text): int
-    {
-        return mb_strlen(strip_tags($text), 'UTF-8');
-    }
+	/**
+	 * Count characters in text
+	 *
+	 * @param string $text Text to count
+	 * @return int Character count
+	 */
+	protected function count_characters( string $text ): int {
+		return mb_strlen( strip_tags( $text ), 'UTF-8' );
+	}
 }

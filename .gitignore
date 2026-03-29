@@ -37,3 +37,7 @@ coverage/
 *.tmp
 *.bak
 .claude/
+
+# Documentation (local development)
+CLAUDE.md
+docs/

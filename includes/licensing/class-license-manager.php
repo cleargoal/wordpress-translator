@@ -1,33 +1,30 @@
 <?php
 namespace WPSTE\Licensing;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-class License_Manager
-{
-    protected $storage;
-    protected $validator;
+class License_Manager {
 
-    public function __construct()
-    {
-        $this->storage = new License_Storage();
-        $this->validator = new License_Validator();
-    }
+	protected $storage;
+	protected $validator;
 
-    public function validate()
-    {
-        // Called by cron - validates license with server
-        return true;
-    }
+	public function __construct() {
+		$this->storage = new License_Storage();
+		$this->validator = new License_Validator();
+	}
 
-    public function activate($license_key)
-    {
-        $result = $this->validator->validate($license_key);
-        if ($result['valid']) {
-            $this->storage->save_license($result);
-        }
-        return $result;
-    }
+	public function validate() {
+		// Called by cron - validates license with server
+		return true;
+	}
+
+	public function activate( $license_key ) {
+		$result = $this->validator->validate( $license_key );
+		if ( $result['valid'] ) {
+			$this->storage->save_license( $result );
+		}
+		return $result;
+	}
 }

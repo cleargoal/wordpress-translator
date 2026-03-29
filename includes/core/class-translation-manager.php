@@ -9,190 +9,187 @@
 
 namespace WPSTE\Core;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 /**
  * Translation Manager class
  */
-class Translation_Manager
-{
-    /**
-     * Provider factory
-     *
-     * @var Provider_Factory
-     */
-    protected $factory;
+class Translation_Manager {
 
-    /**
-     * Settings
-     *
-     * @var array
-     */
-    protected $settings;
+	/**
+	 * Provider factory
+	 *
+	 * @var Provider_Factory
+	 */
+	protected $factory;
 
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->factory = new Provider_Factory();
-        $this->settings = get_option('wpste_settings', []);
-    }
+	/**
+	 * Settings
+	 *
+	 * @var array
+	 */
+	protected $settings;
 
-    /**
-     * Translate text
-     *
-     * @param string $text Text to translate
-     * @param string $source_lang Source language
-     * @param string $target_lang Target language
-     * @param array $options Additional options
-     * @return array Translation result
-     */
-    public function translate(string $text, string $source_lang, string $target_lang, array $options = []): array
-    {
-        if (empty($text)) {
-            return ['error' => 'Empty text provided'];
-        }
+	/**
+	 * Constructor
+	 */
+	public function __construct() {
+		$this->factory = new Provider_Factory();
+		$this->settings = get_option( 'wpste_settings', array() );
+	}
 
-        // Get provider list (primary + fallbacks)
-        $providers = $this->get_provider_list();
+	/**
+	 * Translate text
+	 *
+	 * @param string $text Text to translate
+	 * @param string $source_lang Source language
+	 * @param string $target_lang Target language
+	 * @param array  $options Additional options
+	 * @return array Translation result
+	 */
+	public function translate( string $text, string $source_lang, string $target_lang, array $options = array() ): array {
+		if ( empty( $text ) ) {
+			return array( 'error' => 'Empty text provided' );
+		}
 
-        $last_error = '';
+		// Get provider list (primary + fallbacks)
+		$providers = $this->get_provider_list();
 
-        foreach ($providers as $provider_name) {
-            $provider = $this->factory->get_provider($provider_name);
+		$last_error = '';
 
-            if (!$provider || !$provider->is_available()) {
-                $last_error = "Provider {$provider_name} not available";
-                continue;
-            }
+		foreach ( $providers as $provider_name ) {
+			$provider = $this->factory->get_provider( $provider_name );
 
-            $result = $provider->translate($text, $source_lang, $target_lang, $options);
+			if ( ! $provider || ! $provider->is_available() ) {
+				$last_error = "Provider {$provider_name} not available";
+				continue;
+			}
 
-            if (!isset($result['error'])) {
-                // Success
-                $result['provider'] = $provider_name;
-                return $result;
-            }
+			$result = $provider->translate( $text, $source_lang, $target_lang, $options );
 
-            $last_error = $result['error'];
+			if ( ! isset( $result['error'] ) ) {
+				// Success
+				$result['provider'] = $provider_name;
+				return $result;
+			}
 
-            // Log failure
-            do_action('wpste_translation_failed', [
-                'provider' => $provider_name,
-                'error' => $last_error,
-                'source_lang' => $source_lang,
-                'target_lang' => $target_lang
-            ]);
-        }
+			$last_error = $result['error'];
 
-        return [
-            'error' => $last_error ?: 'No providers available',
-            'providers_tried' => $providers
-        ];
-    }
+			// Log failure
+			do_action(
+				'wpste_translation_failed',
+				array(
+					'provider' => $provider_name,
+					'error' => $last_error,
+					'source_lang' => $source_lang,
+					'target_lang' => $target_lang,
+				)
+			);
+		}
 
-    /**
-     * Translate batch of texts
-     *
-     * @param array $texts Texts to translate
-     * @param string $source_lang Source language
-     * @param string $target_lang Target language
-     * @param array $options Additional options
-     * @return array Results array
-     */
-    public function translate_batch(array $texts, string $source_lang, string $target_lang, array $options = []): array
-    {
-        $providers = $this->get_provider_list();
+		return array(
+			'error' => $last_error ?: 'No providers available',
+			'providers_tried' => $providers,
+		);
+	}
 
-        foreach ($providers as $provider_name) {
-            $provider = $this->factory->get_provider($provider_name);
+	/**
+	 * Translate batch of texts
+	 *
+	 * @param array  $texts Texts to translate
+	 * @param string $source_lang Source language
+	 * @param string $target_lang Target language
+	 * @param array  $options Additional options
+	 * @return array Results array
+	 */
+	public function translate_batch( array $texts, string $source_lang, string $target_lang, array $options = array() ): array {
+		$providers = $this->get_provider_list();
 
-            if (!$provider || !$provider->is_available()) {
-                continue;
-            }
+		foreach ( $providers as $provider_name ) {
+			$provider = $this->factory->get_provider( $provider_name );
 
-            $result = $provider->translate_batch($texts, $source_lang, $target_lang, $options);
+			if ( ! $provider || ! $provider->is_available() ) {
+				continue;
+			}
 
-            if (!isset($result['error'])) {
-                $result['provider'] = $provider_name;
-                return $result;
-            }
-        }
+			$result = $provider->translate_batch( $texts, $source_lang, $target_lang, $options );
 
-        return [
-            'error' => 'No providers available for batch translation'
-        ];
-    }
+			if ( ! isset( $result['error'] ) ) {
+				$result['provider'] = $provider_name;
+				return $result;
+			}
+		}
 
-    /**
-     * Detect language
-     *
-     * @param string $text Text to analyze
-     * @return array Result with language code
-     */
-    public function detect_language(string $text): array
-    {
-        $provider_name = $this->settings['primary_provider'] ?? 'deepl';
-        $provider = $this->factory->get_provider($provider_name);
+		return array(
+			'error' => 'No providers available for batch translation',
+		);
+	}
 
-        if (!$provider || !$provider->is_available()) {
-            return ['error' => 'Provider not available'];
-        }
+	/**
+	 * Detect language
+	 *
+	 * @param string $text Text to analyze
+	 * @return array Result with language code
+	 */
+	public function detect_language( string $text ): array {
+		$provider_name = $this->settings['primary_provider'] ?? 'deepl';
+		$provider = $this->factory->get_provider( $provider_name );
 
-        return $provider->detect_language($text);
-    }
+		if ( ! $provider || ! $provider->is_available() ) {
+			return array( 'error' => 'Provider not available' );
+		}
 
-    /**
-     * Get provider list (primary + fallbacks)
-     *
-     * @return array
-     */
-    protected function get_provider_list(): array
-    {
-        $providers = [];
+		return $provider->detect_language( $text );
+	}
 
-        // Add primary provider
-        if (!empty($this->settings['primary_provider'])) {
-            $providers[] = $this->settings['primary_provider'];
-        }
+	/**
+	 * Get provider list (primary + fallbacks)
+	 *
+	 * @return array
+	 */
+	protected function get_provider_list(): array {
+		$providers = array();
 
-        // Add fallback providers
-        if (!empty($this->settings['fallback_providers'])) {
-            foreach ($this->settings['fallback_providers'] as $fallback) {
-                if (!in_array($fallback, $providers)) {
-                    $providers[] = $fallback;
-                }
-            }
-        }
+		// Add primary provider
+		if ( ! empty( $this->settings['primary_provider'] ) ) {
+			$providers[] = $this->settings['primary_provider'];
+		}
 
-        // If no providers configured, use default
-        if (empty($providers)) {
-            $providers[] = 'deepl';
-        }
+		// Add fallback providers
+		if ( ! empty( $this->settings['fallback_providers'] ) ) {
+			foreach ( $this->settings['fallback_providers'] as $fallback ) {
+				if ( ! in_array( $fallback, $providers ) ) {
+					$providers[] = $fallback;
+				}
+			}
+		}
 
-        return apply_filters('wpste_provider_list', $providers);
-    }
+		// If no providers configured, use default
+		if ( empty( $providers ) ) {
+			$providers[] = 'deepl';
+		}
 
-    /**
-     * Get available providers
-     *
-     * @return array
-     */
-    public function get_available_providers(): array
-    {
-        $all_providers = $this->factory->get_registered_providers();
-        $available = [];
+		return apply_filters( 'wpste_provider_list', $providers );
+	}
 
-        foreach ($all_providers as $name) {
-            $provider = $this->factory->get_provider($name);
-            if ($provider && $provider->is_available()) {
-                $available[] = $name;
-            }
-        }
+	/**
+	 * Get available providers
+	 *
+	 * @return array
+	 */
+	public function get_available_providers(): array {
+		$all_providers = $this->factory->get_registered_providers();
+		$available = array();
 
-        return $available;
-    }
+		foreach ( $all_providers as $name ) {
+			$provider = $this->factory->get_provider( $name );
+			if ( $provider && $provider->is_available() ) {
+				$available[] = $name;
+			}
+		}
+
+		return $available;
+	}
 }

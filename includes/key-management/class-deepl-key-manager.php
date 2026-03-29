@@ -9,222 +9,225 @@
 
 namespace WPSTE\KeyManagement;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 /**
  * DeepL Key Manager class
  */
-class DeepL_Key_Manager implements Key_Manager_Interface
-{
-    /**
-     * Provider name
-     *
-     * @var string
-     */
-    protected $provider = 'deepl';
+class DeepL_Key_Manager implements Key_Manager_Interface {
 
-    /**
-     * Database instance
-     *
-     * @var \WPSTE\Database\Database
-     */
-    protected $database;
+	/**
+	 * Provider name
+	 *
+	 * @var string
+	 */
+	protected $provider = 'deepl';
 
-    /**
-     * Cache TTL (5 minutes)
-     *
-     * @var int
-     */
-    protected $cache_ttl = 300;
+	/**
+	 * Database instance
+	 *
+	 * @var \WPSTE\Database\Database
+	 */
+	protected $database;
 
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->database = new \WPSTE\Database\Database();
-    }
+	/**
+	 * Cache TTL (5 minutes)
+	 *
+	 * @var int
+	 */
+	protected $cache_ttl = 300;
 
-    /**
-     * Get next available API key using rotation strategy
-     *
-     * @return array|null
-     */
-    public function get_next_key(): ?array
-    {
-        $keys = $this->get_all_keys(true);
+	/**
+	 * Constructor
+	 */
+	public function __construct() {
+		$this->database = new \WPSTE\Database\Database();
+	}
 
-        if (empty($keys)) {
-            return null;
-        }
+	/**
+	 * Get next available API key using rotation strategy
+	 *
+	 * @return array|null
+	 */
+	public function get_next_key(): ?array {
+		$keys = $this->get_all_keys( true );
 
-        // Sort by remaining quota (most available first)
-        usort($keys, function ($a, $b) {
-            $remaining_a = ($a['quota_limit'] ?? 500000) - ($a['characters_used'] ?? 0);
-            $remaining_b = ($b['quota_limit'] ?? 500000) - ($b['characters_used'] ?? 0);
-            return $remaining_b - $remaining_a; // Descending
-        });
+		if ( empty( $keys ) ) {
+			return null;
+		}
 
-        return [
-            'id' => $keys[0]['id'],
-            'api_key' => $keys[0]['api_key']
-        ];
-    }
+		// Sort by remaining quota (most available first)
+		usort(
+			$keys,
+			function ( $a, $b ) {
+				$remaining_a = ( $a['quota_limit'] ?? 500000 ) - ( $a['characters_used'] ?? 0 );
+				$remaining_b = ( $b['quota_limit'] ?? 500000 ) - ( $b['characters_used'] ?? 0 );
+				return $remaining_b - $remaining_a; // Descending
+			}
+		);
 
-    /**
-     * Add new API key
-     *
-     * @param string $api_key API key
-     * @param string $label Optional label
-     * @param int|null $quota_limit Optional quota limit
-     * @return int|false
-     */
-    public function add_key(string $api_key, string $label = '', ?int $quota_limit = null)
-    {
-        $data = [
-            'provider' => $this->provider,
-            'api_key' => $api_key,
-            'label' => $label ?: 'DeepL Key',
-            'quota_limit' => $quota_limit ?: 500000, // Default 500K for free tier
-            'is_active' => 1,
-            'created_at' => current_time('mysql'),
-        ];
+		return array(
+			'id' => $keys[0]['id'],
+			'api_key' => $keys[0]['api_key'],
+		);
+	}
 
-        $result = $this->database->insert('api_keys', $data);
+	/**
+	 * Add new API key
+	 *
+	 * @param string   $api_key API key
+	 * @param string   $label Optional label
+	 * @param int|null $quota_limit Optional quota limit
+	 * @return int|false
+	 */
+	public function add_key( string $api_key, string $label = '', ?int $quota_limit = null ) {
+		$data = array(
+			'provider' => $this->provider,
+			'api_key' => $api_key,
+			'label' => $label ?: 'DeepL Key',
+			'quota_limit' => $quota_limit ?: 500000, // Default 500K for free tier
+			'is_active' => 1,
+			'created_at' => current_time( 'mysql' ),
+		);
 
-        if ($result) {
-            // Clear cache
-            delete_transient('wpste_api_keys_deepl');
-        }
+		$result = $this->database->insert( 'api_keys', $data );
 
-        return $result;
-    }
+		if ( $result ) {
+			// Clear cache
+			delete_transient( 'wpste_api_keys_deepl' );
+		}
 
-    /**
-     * Remove API key
-     *
-     * @param int $key_id Key ID
-     * @return bool
-     */
-    public function remove_key(int $key_id): bool
-    {
-        $result = $this->database->delete('api_keys', [
-            'id' => $key_id,
-            'provider' => $this->provider
-        ]);
+		return $result;
+	}
 
-        if ($result) {
-            delete_transient('wpste_api_keys_deepl');
-        }
+	/**
+	 * Remove API key
+	 *
+	 * @param int $key_id Key ID
+	 * @return bool
+	 */
+	public function remove_key( int $key_id ): bool {
+		$result = $this->database->delete(
+			'api_keys',
+			array(
+				'id' => $key_id,
+				'provider' => $this->provider,
+			)
+		);
 
-        return (bool)$result;
-    }
+		if ( $result ) {
+			delete_transient( 'wpste_api_keys_deepl' );
+		}
 
-    /**
-     * Get all keys for this provider
-     *
-     * @param bool $active_only Only get active keys
-     * @return array
-     */
-    public function get_all_keys(bool $active_only = true): array
-    {
-        $cache_key = 'wpste_api_keys_deepl';
-        $keys = get_transient($cache_key);
+		return (bool) $result;
+	}
 
-        if ($keys === false) {
-            $where = ['provider' => $this->provider];
-            if ($active_only) {
-                $where['is_active'] = 1;
-            }
+	/**
+	 * Get all keys for this provider
+	 *
+	 * @param bool $active_only Only get active keys
+	 * @return array
+	 */
+	public function get_all_keys( bool $active_only = true ): array {
+		$cache_key = 'wpste_api_keys_deepl';
+		$keys = get_transient( $cache_key );
 
-            $keys = $this->database->get_results('api_keys', $where, ARRAY_A);
+		if ( $keys === false ) {
+			$where = array( 'provider' => $this->provider );
+			if ( $active_only ) {
+				$where['is_active'] = 1;
+			}
 
-            set_transient($cache_key, $keys, $this->cache_ttl);
-        }
+			$keys = $this->database->get_results( 'api_keys', $where, ARRAY_A );
 
-        return $keys;
-    }
+			set_transient( $cache_key, $keys, $this->cache_ttl );
+		}
 
-    /**
-     * Update key usage statistics
-     *
-     * @param int $key_id Key ID
-     * @param int $characters Number of characters used
-     * @return bool
-     */
-    public function update_usage(int $key_id, int $characters): bool
-    {
-        global $wpdb;
+		return $keys;
+	}
 
-        $table = $this->database->get_table_name('api_keys');
+	/**
+	 * Update key usage statistics
+	 *
+	 * @param int $key_id Key ID
+	 * @param int $characters Number of characters used
+	 * @return bool
+	 */
+	public function update_usage( int $key_id, int $characters ): bool {
+		global $wpdb;
 
-        $result = $wpdb->query($wpdb->prepare(
-            "UPDATE {$table}
+		$table = $this->database->get_table_name( 'api_keys' );
+
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table}
             SET usage_count = usage_count + 1,
                 characters_used = characters_used + %d,
                 updated_at = NOW()
             WHERE id = %d AND provider = %s",
-            $characters,
-            $key_id,
-            $this->provider
-        ));
+				$characters,
+				$key_id,
+				$this->provider
+			)
+		);
 
-        if ($result) {
-            delete_transient('wpste_api_keys_deepl');
-        }
+		if ( $result ) {
+			delete_transient( 'wpste_api_keys_deepl' );
+		}
 
-        return (bool)$result;
-    }
+		return (bool) $result;
+	}
 
-    /**
-     * Check if key has available quota
-     *
-     * @param int $key_id Key ID
-     * @return bool
-     */
-    public function has_quota(int $key_id): bool
-    {
-        $key = $this->database->get_row('api_keys', ['id' => $key_id], ARRAY_A);
+	/**
+	 * Check if key has available quota
+	 *
+	 * @param int $key_id Key ID
+	 * @return bool
+	 */
+	public function has_quota( int $key_id ): bool {
+		$key = $this->database->get_row( 'api_keys', array( 'id' => $key_id ), ARRAY_A );
 
-        if (!$key || !$key['quota_limit']) {
-            return true; // Assume unlimited if no limit set
-        }
+		if ( ! $key || ! $key['quota_limit'] ) {
+			return true; // Assume unlimited if no limit set
+		}
 
-        return $key['characters_used'] < $key['quota_limit'];
-    }
+		return $key['characters_used'] < $key['quota_limit'];
+	}
 
-    /**
-     * Activate/deactivate key
-     *
-     * @param int $key_id Key ID
-     * @param bool $active Active status
-     * @return bool
-     */
-    public function set_active(int $key_id, bool $active): bool
-    {
-        $result = $this->database->update('api_keys', [
-            'is_active' => $active ? 1 : 0
-        ], [
-            'id' => $key_id,
-            'provider' => $this->provider
-        ]);
+	/**
+	 * Activate/deactivate key
+	 *
+	 * @param int  $key_id Key ID
+	 * @param bool $active Active status
+	 * @return bool
+	 */
+	public function set_active( int $key_id, bool $active ): bool {
+		$result = $this->database->update(
+			'api_keys',
+			array(
+				'is_active' => $active ? 1 : 0,
+			),
+			array(
+				'id' => $key_id,
+				'provider' => $this->provider,
+			)
+		);
 
-        if ($result) {
-            delete_transient('wpste_api_keys_deepl');
-        }
+		if ( $result ) {
+			delete_transient( 'wpste_api_keys_deepl' );
+		}
 
-        return (bool)$result;
-    }
+		return (bool) $result;
+	}
 
-    /**
-     * Get provider name
-     *
-     * @return string
-     */
-    public function get_provider_name(): string
-    {
-        return $this->provider;
-    }
+	/**
+	 * Get provider name
+	 *
+	 * @return string
+	 */
+	public function get_provider_name(): string {
+		return $this->provider;
+	}
 }

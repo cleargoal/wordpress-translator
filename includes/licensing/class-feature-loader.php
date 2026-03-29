@@ -1,21 +1,19 @@
 <?php
 namespace WPSTE\Licensing;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-class Feature_Loader
-{
-    protected $storage;
+class Feature_Loader {
 
-    public function __construct($storage)
-    {
-        $this->storage = $storage;
-    }
+	protected $storage;
 
-    public function load_features()
-    {
-        // TODO: Load downloaded premium features
-    }
+	public function __construct( $storage ) {
+		$this->storage = $storage;
+	}
+
+	public function load_features() {
+		// TODO: Load downloaded premium features
+	}
 }

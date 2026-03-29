@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<ruleset name="WP Smart Translation Engine">
+    <description>WordPress Coding Standards for WP Smart Translation Engine</description>
+
+    <!-- Scan these files -->
+    <file>./includes</file>
+    <file>./admin</file>
+    <file>./public</file>
+    <file>./cli</file>
+    <file>./wp-smart-translation-engine.php</file>
+    <file>./uninstall.php</file>
+
+    <!-- Exclude patterns -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <exclude-pattern>*.js</exclude-pattern>
+
+    <!-- Use WordPress Coding Standards -->
+    <rule ref="WordPress">
+        <!-- Allow short array syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+
+        <!-- Allow strict types declaration -->
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterBlock"/>
+    </rule>
+
+    <!-- Additional rules -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="wp-smart-translation-engine"/>
+            </property>
+        </properties>
+    </rule>
+
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="wpste"/>
+                <element value="WPSTE"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- Set minimum PHP version -->
+    <config name="minimum_supported_wp_version" value="6.0"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <!-- Show progress and use colors -->
+    <arg value="ps"/>
+    <arg name="colors"/>
+
+    <!-- Show sniff codes in all reports -->
+    <arg value="ns"/>
+
+    <!-- Tab width for indentation -->
+    <arg name="tab-width" value="4"/>
+</ruleset>
