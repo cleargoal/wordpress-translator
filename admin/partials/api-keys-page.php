@@ -25,6 +25,7 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( $_POST['wpste_ad
 	$api_key = sanitize_text_field( $_POST['api_key'] );
 	$label = sanitize_text_field( $_POST['label'] );
 	$quota_limit = ! empty( $_POST['quota_limit'] ) ? absint( $_POST['quota_limit'] ) : null;
+	$region = ( $provider === 'azure' && ! empty( $_POST['azure_region'] ) ) ? sanitize_text_field( $_POST['azure_region'] ) : null;
 
 	if ( empty( $provider ) || empty( $api_key ) ) {
 		$message = __( 'Provider and API Key are required.', 'wp-smart-translation-engine' );
@@ -49,10 +50,11 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( $_POST['wpste_ad
 					'provider' => $provider,
 					'api_key' => $encrypted_key,
 					'label' => $label,
+					'region' => $region,
 					'quota_limit' => $quota_limit,
 					'is_active' => 1,
 				),
-				array( '%s', '%s', '%s', '%d', '%d' )
+				array( '%s', '%s', '%s', '%s', '%d', '%d' )
 			);
 
 			if ( $result ) {
@@ -61,7 +63,7 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( $_POST['wpste_ad
 				$message = __( 'API Key added successfully.', 'wp-smart-translation-engine' );
 				$message_type = 'success';
 			} else {
-				$message = __( 'Failed to add API Key.', 'wp-smart-translation-engine' );
+				$message = __( 'Failed to add API Key.', 'wp-smart-translation-engine' ) . ' ' . $wpdb->last_error;
 				$message_type = 'error';
 			}
 		}
@@ -237,6 +239,28 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 								<p class="description"><?php echo esc_html__( 'Maximum characters allowed for this key. DeepL Free: 500,000/month.', 'wp-smart-translation-engine' ); ?></p>
 							</td>
 						</tr>
+						<tr id="azure_region_row" style="display:none;">
+							<th scope="row">
+								<label for="azure_region"><?php echo esc_html__( 'Azure Region', 'wp-smart-translation-engine' ); ?> <span class="required">*</span></label>
+							</th>
+							<td>
+								<select name="azure_region" id="azure_region">
+									<option value="eastus">East US (eastus)</option>
+									<option value="eastus2">East US 2 (eastus2)</option>
+									<option value="westus">West US (westus)</option>
+									<option value="westus2">West US 2 (westus2)</option>
+									<option value="westeurope" selected>West Europe (westeurope)</option>
+									<option value="northeurope">North Europe (northeurope)</option>
+									<option value="southeastasia">Southeast Asia (southeastasia)</option>
+									<option value="japaneast">Japan East (japaneast)</option>
+									<option value="australiaeast">Australia East (australiaeast)</option>
+									<option value="canadacentral">Canada Central (canadacentral)</option>
+									<option value="uksouth">UK South (uksouth)</option>
+									<option value="centralindia">Central India (centralindia)</option>
+								</select>
+								<p class="description"><?php echo esc_html__( 'Select the Azure region where your Translator resource was created.', 'wp-smart-translation-engine' ); ?></p>
+							</td>
+						</tr>
 					</tbody>
 				</table>
 
@@ -268,6 +292,9 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 									<tr>
 										<th><?php echo esc_html__( 'Label', 'wp-smart-translation-engine' ); ?></th>
 										<th><?php echo esc_html__( 'API Key', 'wp-smart-translation-engine' ); ?></th>
+										<?php if ( $provider === 'azure' ) : ?>
+											<th><?php echo esc_html__( 'Region', 'wp-smart-translation-engine' ); ?></th>
+										<?php endif; ?>
 										<th><?php echo esc_html__( 'Usage', 'wp-smart-translation-engine' ); ?></th>
 										<th><?php echo esc_html__( 'Quota Limit', 'wp-smart-translation-engine' ); ?></th>
 										<th><?php echo esc_html__( 'Status', 'wp-smart-translation-engine' ); ?></th>
@@ -292,6 +319,11 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 													?>
 												</code>
 											</td>
+											<?php if ( $provider === 'azure' ) : ?>
+												<td>
+													<strong><?php echo esc_html( $key->region ?: 'eastus' ); ?></strong>
+												</td>
+											<?php endif; ?>
 											<td>
 												<?php
 												$usage = number_format( $key->characters_used );
@@ -422,3 +454,21 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 	color: #d63638;
 }
 </style>
+
+<script>
+jQuery(document).ready(function($) {
+	// Show/hide Azure region field based on provider selection
+	$('#provider').on('change', function() {
+		if ($(this).val() === 'azure') {
+			$('#azure_region_row').show();
+			$('#azure_region').prop('required', true);
+		} else {
+			$('#azure_region_row').hide();
+			$('#azure_region').prop('required', false);
+		}
+	});
+
+	// Trigger on page load in case Azure is pre-selected
+	$('#provider').trigger('change');
+});
+</script>

@@ -102,8 +102,10 @@ abstract class Abstract_Translation_Provider implements Translation_Provider_Int
 	 * @return void
 	 */
 	protected function log_usage( int $api_key_id, int $characters ): void {
-		$this->database->query(
-			$this->database->wpdb->prepare(
+		global $wpdb;
+
+		$wpdb->query(
+			$wpdb->prepare(
 				"UPDATE {$this->database->get_table_name('api_keys')}
             SET usage_count = usage_count + 1,
                 characters_used = characters_used + %d,

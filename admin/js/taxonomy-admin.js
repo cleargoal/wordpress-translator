@@ -11,6 +11,23 @@
 
 	$(document).ready(function() {
 
+		// Check for success message after page reload
+		var successMessage = sessionStorage.getItem('wpste_translation_success');
+		if (successMessage) {
+			// Clear the stored message
+			sessionStorage.removeItem('wpste_translation_success');
+
+			// Show success message
+			var $message = $('.wpste-translation-message');
+			if ($message.length) {
+				$message
+					.removeClass('error')
+					.addClass('success')
+					.html('<strong>' + wpste_taxonomy.strings.success + '</strong> ' + successMessage)
+					.fadeIn();
+			}
+		}
+
 		// Translate Term Button
 		$('.wpste-translate-term-btn').on('click', function() {
 			var $button = $(this);
@@ -43,19 +60,11 @@
 				},
 				success: function(response) {
 					if (response.success) {
-						$message
-							.removeClass('error')
-							.addClass('success')
-							.html('<strong>' + wpste_taxonomy.strings.success + '</strong> ' + response.data.message)
-							.fadeIn();
+						// Store success message in sessionStorage
+						sessionStorage.setItem('wpste_translation_success', response.data.message);
 
-						// Remove translated language from select
-						$select.find('option[value="' + targetLang + '"]').remove();
-
-						// Reload page after 2 seconds to show new translation
-						setTimeout(function() {
-							location.reload();
-						}, 2000);
+						// Reload page immediately to show new translation
+						location.reload();
 					} else {
 						$message
 							.removeClass('success')

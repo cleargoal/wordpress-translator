@@ -172,8 +172,10 @@ class Azure_Key_Manager implements Key_Manager_Interface {
 	 * @return bool Success status
 	 */
 	public function update_usage( int $key_id, int $characters ): bool {
-		$result = $this->database->query(
-			$this->database->wpdb->prepare(
+		global $wpdb;
+
+		$result = $wpdb->query(
+			$wpdb->prepare(
 				"UPDATE {$this->database->get_table_name('api_keys')}
                 SET usage_count = usage_count + 1,
                     characters_used = characters_used + %d,

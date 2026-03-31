@@ -33,11 +33,11 @@ class Azure_Provider extends Abstract_Translation_Provider {
 	protected $api_version = '3.0';
 
 	/**
-	 * Base API URL format
+	 * Base API URL (global endpoint)
 	 *
 	 * @var string
 	 */
-	protected $api_base_url = 'https://%s.api.cognitive.microsofttranslator.com';
+	protected $api_base_url = 'https://api.cognitive.microsofttranslator.com';
 
 	/**
 	 * Translate text
@@ -64,7 +64,7 @@ class Azure_Provider extends Abstract_Translation_Provider {
 		$target_lang = $this->normalize_language_code( $target_lang );
 
 		// Build API URL
-		$url = sprintf( $this->api_base_url, $region ) . '/translate';
+		$url = $this->api_base_url . '/translate';
 		$url = add_query_arg(
 			array(
 				'api-version' => $this->api_version,
@@ -104,7 +104,7 @@ class Azure_Provider extends Abstract_Translation_Provider {
 
 		if ( ! $data || ! isset( $data[0]['translations'][0]['text'] ) ) {
 			return array(
-				'error' => 'Invalid response from Azure API',
+				'error' => 'Invalid response from Azure API. HTTP ' . $response['code'] . ': ' . substr( $response['body'], 0, 200 ),
 				'response' => $response['body'],
 			);
 		}
@@ -154,7 +154,7 @@ class Azure_Provider extends Abstract_Translation_Provider {
 		$target_lang = $this->normalize_language_code( $target_lang );
 
 		// Build API URL
-		$url = sprintf( $this->api_base_url, $region ) . '/translate';
+		$url = $this->api_base_url . '/translate';
 		$url = add_query_arg(
 			array(
 				'api-version' => $this->api_version,
@@ -242,7 +242,7 @@ class Azure_Provider extends Abstract_Translation_Provider {
 		$region = $key_data['region'] ?? 'eastus';
 
 		// Build API URL
-		$url = sprintf( $this->api_base_url, $region ) . '/detect';
+		$url = $this->api_base_url . '/detect';
 		$url = add_query_arg( 'api-version', $this->api_version, $url );
 
 		// Prepare request body
