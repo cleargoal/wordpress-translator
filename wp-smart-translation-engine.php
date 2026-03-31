@@ -257,6 +257,22 @@ function wpste_run(): void {
 	$taxonomy_frontend = new WPSTE\Frontend\Taxonomy_Frontend();
 	$taxonomy_frontend->init();
 
+	// Initialize language switcher
+	require_once WPSTE_PLUGIN_DIR . 'public/class-language-switcher.php';
+	$language_switcher = new WPSTE\Frontend\Language_Switcher();
+
+	// Register language switcher shortcode
+	add_shortcode( 'wpste_language_switcher', array( $language_switcher, 'shortcode' ) );
+
+	// Register language switcher widget
+	require_once WPSTE_PLUGIN_DIR . 'public/class-language-switcher-widget.php';
+	add_action(
+		'widgets_init',
+		function () {
+			register_widget( 'WPSTE\Frontend\Language_Switcher_Widget' );
+		}
+	);
+
 	// Initialize REST API
 	require_once WPSTE_PLUGIN_DIR . 'includes/integrations/class-rest-api.php';
 	add_action(

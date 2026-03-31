@@ -1,0 +1,124 @@
+/**
+ * Language Switcher Styles
+ *
+ * @package WP_Smart_Translation_Engine
+ */
+
+/* Dropdown Style */
+.wpste-language-switcher.wpste-dropdown {
+	display: inline-block;
+	margin: 10px 0;
+}
+
+.wpste-language-switcher.wpste-dropdown select.wpste-language-select {
+	padding: 8px 12px;
+	font-size: 14px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	background-color: #fff;
+	cursor: pointer;
+	min-width: 150px;
+	transition: border-color 0.3s ease;
+}
+
+.wpste-language-switcher.wpste-dropdown select.wpste-language-select:hover {
+	border-color: #999;
+}
+
+.wpste-language-switcher.wpste-dropdown select.wpste-language-select:focus {
+	outline: none;
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+/* Flags Style */
+.wpste-language-switcher.wpste-flags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 10px 0;
+}
+
+.wpste-language-switcher.wpste-flags a.wpste-lang-flag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	background-color: #fff;
+	text-decoration: none;
+	color: #333;
+	font-size: 14px;
+	transition: all 0.3s ease;
+}
+
+.wpste-language-switcher.wpste-flags a.wpste-lang-flag:hover {
+	background-color: #f5f5f5;
+	border-color: #999;
+	transform: translateY(-2px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.wpste-language-switcher.wpste-flags a.wpste-lang-flag.wpste-current {
+	background-color: #2271b1;
+	color: #fff;
+	border-color: #2271b1;
+	font-weight: 600;
+}
+
+.wpste-language-switcher.wpste-flags a.wpste-lang-flag.wpste-current:hover {
+	background-color: #135e96;
+	border-color: #135e96;
+}
+
+.wpste-language-switcher.wpste-flags .wpste-flag {
+	font-size: 18px;
+	line-height: 1;
+}
+
+.wpste-language-switcher.wpste-flags .wpste-lang-name {
+	font-size: 14px;
+	line-height: 1;
+}
+
+/* Widget Specific */
+.widget .wpste-language-switcher {
+	margin: 0;
+}
+
+.widget .wpste-language-switcher.wpste-dropdown select {
+	width: 100%;
+}
+
+.widget .wpste-language-switcher.wpste-flags {
+	justify-content: flex-start;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+	.wpste-language-switcher.wpste-flags a.wpste-lang-flag {
+		padding: 8px 10px;
+		font-size: 13px;
+	}
+
+	.wpste-language-switcher.wpste-flags .wpste-flag {
+		font-size: 16px;
+	}
+}
+
+/* RTL Support */
+body.rtl .wpste-language-switcher.wpste-flags {
+	direction: rtl;
+}
+
+/* Accessibility */
+.wpste-language-switcher a:focus {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+
+.wpste-language-switcher select:focus {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
