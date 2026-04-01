@@ -184,6 +184,74 @@ $show_fallback = ( $current_tier !== 'free' ); // Hide fallback providers for fr
 
 		<?php submit_button( __( 'Save Settings', 'wp-smart-translation-engine' ), 'primary', 'wpste_settings_submit' ); ?>
 	</form>
+
+	<!-- Language Switcher Documentation -->
+	<div class="wrap" style="margin-top: 30px;">
+		<h2><?php esc_html_e( 'Language Switcher', 'wp-smart-translation-engine' ); ?></h2>
+		<div class="card">
+			<h3><?php esc_html_e( 'How to Add Language Switcher to Your Site', 'wp-smart-translation-engine' ); ?></h3>
+
+			<h4><?php esc_html_e( 'Method 1: Using Gutenberg Block', 'wp-smart-translation-engine' ); ?></h4>
+			<ol>
+				<li><?php esc_html_e( 'Edit any post, page, or template in the block editor', 'wp-smart-translation-engine' ); ?></li>
+				<li><?php esc_html_e( 'Click the + (Add block) button', 'wp-smart-translation-engine' ); ?></li>
+				<li><?php esc_html_e( 'Search for "Language Switcher"', 'wp-smart-translation-engine' ); ?></li>
+				<li><?php esc_html_e( 'Insert the block and configure the display style', 'wp-smart-translation-engine' ); ?></li>
+			</ol>
+
+			<h4><?php esc_html_e( 'Method 2: Using Shortcode', 'wp-smart-translation-engine' ); ?></h4>
+			<p><?php esc_html_e( 'Add this shortcode anywhere in your content:', 'wp-smart-translation-engine' ); ?></p>
+			<p>
+				<code style="background: #f0f0f1; padding: 5px 10px; border-radius: 3px; font-size: 14px;">[wpste_language_switcher]</code>
+				<button type="button" class="button button-small" onclick="navigator.clipboard.writeText('[wpste_language_switcher]')">
+					<?php esc_html_e( 'Copy', 'wp-smart-translation-engine' ); ?>
+				</button>
+			</p>
+
+			<h4><?php esc_html_e( 'Shortcode Options:', 'wp-smart-translation-engine' ); ?></h4>
+			<ul>
+				<li>
+					<code style="background: #f0f0f1; padding: 3px 8px; border-radius: 3px;">style="dropdown"</code> - <?php esc_html_e( 'Display as dropdown (default)', 'wp-smart-translation-engine' ); ?>
+				</li>
+				<li>
+					<code style="background: #f0f0f1; padding: 3px 8px; border-radius: 3px;">style="flags"</code> - <?php esc_html_e( 'Display as flag links', 'wp-smart-translation-engine' ); ?>
+				</li>
+				<li>
+					<code style="background: #f0f0f1; padding: 3px 8px; border-radius: 3px;">show_flags="yes"</code> - <?php esc_html_e( 'Show emoji flags (default: yes)', 'wp-smart-translation-engine' ); ?>
+				</li>
+				<li>
+					<code style="background: #f0f0f1; padding: 3px 8px; border-radius: 3px;">show_names="yes"</code> - <?php esc_html_e( 'Show language names (default: yes)', 'wp-smart-translation-engine' ); ?>
+				</li>
+			</ul>
+
+			<h4><?php esc_html_e( 'Examples:', 'wp-smart-translation-engine' ); ?></h4>
+			<p>
+				<code style="background: #f0f0f1; padding: 5px 10px; border-radius: 3px; display: inline-block; margin: 5px 0;">[wpste_language_switcher style="dropdown"]</code>
+			</p>
+			<p>
+				<code style="background: #f0f0f1; padding: 5px 10px; border-radius: 3px; display: inline-block; margin: 5px 0;">[wpste_language_switcher style="flags" show_names="no"]</code>
+			</p>
+
+			<h4><?php esc_html_e( 'Method 3: For Classic Themes (with Widget Areas)', 'wp-smart-translation-engine' ); ?></h4>
+			<ol>
+				<li><?php esc_html_e( 'Go to Appearance → Widgets', 'wp-smart-translation-engine' ); ?></li>
+				<li><?php esc_html_e( 'Drag "Language Switcher" widget to your sidebar', 'wp-smart-translation-engine' ); ?></li>
+				<li><?php esc_html_e( 'Configure and save', 'wp-smart-translation-engine' ); ?></li>
+			</ol>
+
+			<h4><?php esc_html_e( 'Method 4: In Theme Template Files (PHP)', 'wp-smart-translation-engine' ); ?></h4>
+			<pre style="background: #f0f0f1; padding: 15px; border-radius: 3px; overflow-x: auto;"><code>&lt;?php
+if (class_exists('WPSTE\Frontend\Language_Switcher')) {
+    $switcher = new WPSTE\Frontend\Language_Switcher();
+    echo $switcher->render(array(
+        'style' => 'dropdown',
+        'show_flags' => true,
+        'show_names' => true
+    ));
+}
+?&gt;</code></pre>
+		</div>
+	</div>
 </div>
 
 <script>

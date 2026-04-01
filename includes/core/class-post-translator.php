@@ -110,59 +110,49 @@ class Post_Translator {
 			}
 		}
 
-		// Create new post
-		$new_post_data = array(
-			'post_title' => $title_result['text'],
-			'post_content' => $content_result['text'],
-			'post_excerpt' => $translated_excerpt,
-			'post_status' => 'draft',
-			'post_type' => $source_post->post_type,
-			'post_author' => $source_post->post_author,
-		);
-
-		$new_post_id = wp_insert_post( $new_post_data );
-
-		if ( is_wp_error( $new_post_id ) ) {
-			return array( 'error' => $new_post_id->get_error_message() );
-		}
-
-		// Add post meta
-		update_post_meta( $new_post_id, '_wpste_lang_code', $target_lang );
-		update_post_meta( $new_post_id, '_wpste_translation_group', $translation_group );
-		update_post_meta( $new_post_id, '_wpste_source_post_id', $post_id );
-
-		// Store translation record
+		// Store translation in database table (parent-child model - NO new post created)
 		$characters = strlen( $source_post->post_title ) + strlen( $source_post->post_content ) + strlen( $source_post->post_excerpt );
 
-		$this->database->insert(
-			'translations',
+		global $wpdb;
+		$result = $wpdb->insert(
+			$wpdb->prefix . 'wpste_post_translations',
 			array(
-				'post_id' => $new_post_id,
-				'source_post_id' => $post_id,
-				'lang_code' => $target_lang,
-				'translation_group' => $translation_group,
-				'provider_used' => $title_result['provider'] ?? 'unknown',
-				'status' => 'draft',
-				'translated_at' => current_time( 'mysql' ),
-				'characters_translated' => $characters,
-			)
+				'post_id'                => $post_id,  // Parent post ID
+				'lang_code'              => $target_lang,
+				'translated_title'       => $title_result['text'],
+				'translated_content'     => $content_result['text'],
+				'translated_excerpt'     => $translated_excerpt,
+				'translation_group'      => $translation_group,
+				'provider_used'          => $title_result['provider'] ?? 'unknown',
+				'status'                 => 'published',
+				'translated_at'          => current_time( 'mysql' ),
+				'characters_translated'  => $characters,
+			),
+			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' )
 		);
+
+		if ( $result === false ) {
+			return array( 'error' => 'Failed to store translation in database' );
+		}
+
+		$translation_id = $wpdb->insert_id;
 
 		do_action(
 			'wpste_post_translated',
 			array(
-				'source_post_id' => $post_id,
-				'new_post_id' => $new_post_id,
-				'target_lang' => $target_lang,
-				'provider' => $title_result['provider'] ?? 'unknown',
+				'source_post_id'  => $post_id,
+				'translation_id'  => $translation_id,
+				'target_lang'     => $target_lang,
+				'provider'        => $title_result['provider'] ?? 'unknown',
 			)
 		);
 
 		return array(
-			'post_id' => $new_post_id,
-			'source_post_id' => $post_id,
-			'target_lang' => $target_lang,
-			'characters' => $characters,
+			'translation_id' => $translation_id,
+			'post_id'        => $post_id,
+			'target_lang'    => $target_lang,
+			'characters'     => $characters,
+			'message'        => 'Translation stored successfully',
 		);
 	}
 
@@ -171,33 +161,48 @@ class Post_Translator {
 	 *
 	 * @param int    $post_id Source post ID
 	 * @param string $target_lang Target language
-	 * @return int|null Translation post ID or null
+	 * @return int|null Translation ID or null
 	 */
 	protected function find_translation( int $post_id, string $target_lang ): ?int {
-		$translation_group = get_post_meta( $post_id, '_wpste_translation_group', true );
-
-		if ( ! $translation_group ) {
-			return null;
-		}
-
 		global $wpdb;
-		$post_id = $wpdb->get_var(
+
+		$translation_id = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT post_id FROM {$wpdb->postmeta} pm1
-            INNER JOIN {$wpdb->postmeta} pm2 ON pm1.post_id = pm2.post_id
-            WHERE pm1.meta_key = '_wpste_translation_group'
-            AND pm1.meta_value = %s
-            AND pm2.meta_key = '_wpste_lang_code'
-            AND pm2.meta_value = %s
-            AND pm1.post_id != %d
-            LIMIT 1",
-				$translation_group,
-				$target_lang,
-				$post_id
+				"SELECT id FROM {$wpdb->prefix}wpste_post_translations
+				WHERE post_id = %d
+				AND lang_code = %s
+				LIMIT 1",
+				$post_id,
+				$target_lang
 			)
 		);
 
-		return $post_id ? (int) $post_id : null;
+		return $translation_id ? (int) $translation_id : null;
+	}
+
+	/**
+	 * Get post translation by language
+	 *
+	 * @param int    $post_id Post ID
+	 * @param string $lang Language code
+	 * @return array|null Translation data or null
+	 */
+	public function get_post_translation( int $post_id, string $lang ): ?array {
+		global $wpdb;
+
+		$translation = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}wpste_post_translations
+				WHERE post_id = %d
+				AND lang_code = %s
+				LIMIT 1",
+				$post_id,
+				$lang
+			),
+			ARRAY_A
+		);
+
+		return $translation ?: null;
 	}
 
 	/**

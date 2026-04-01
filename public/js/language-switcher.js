@@ -17,11 +17,8 @@
 			var lang = $(this).find('option:selected').data('lang');
 
 			if (url && lang) {
-				// Set cookie for language preference
-				setCookie('wpste_lang', lang, 365);
-
-				// Navigate to new URL
-				window.location.href = url;
+				// Set language via AJAX (saves to session + cookie)
+				setLanguageSession(lang, url);
 			}
 		});
 
@@ -33,13 +30,39 @@
 			var lang = $(this).data('lang');
 
 			if (url && lang) {
-				// Set cookie for language preference
-				setCookie('wpste_lang', lang, 365);
-
-				// Navigate to new URL
-				window.location.href = url;
+				// Set language via AJAX (saves to session + cookie)
+				setLanguageSession(lang, url);
 			}
 		});
+
+		/**
+		 * Set language session via AJAX
+		 *
+		 * @param {string} lang Language code
+		 * @param {string} url URL to redirect to after setting language
+		 */
+		function setLanguageSession(lang, url) {
+			// Set cookie immediately as fallback
+			setCookie('wpste_lang', lang, 365);
+
+			// Set session via AJAX
+			$.ajax({
+				url: wpsteLangSwitcher.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wpste_set_language',
+					lang: lang
+				},
+				success: function(response) {
+					// Redirect after session is set
+					window.location.href = url;
+				},
+				error: function() {
+					// If AJAX fails, still redirect (cookie will work)
+					window.location.href = url;
+				}
+			});
+		}
 
 		/**
 		 * Set cookie

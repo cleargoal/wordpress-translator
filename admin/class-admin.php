@@ -144,25 +144,59 @@ class Admin {
 	public function render_translation_metabox( $post ): void {
 		$settings = get_option( 'wpste_settings', array() );
 		$enabled_langs = $settings['enabled_languages'] ?? array( 'en' );
-		$current_lang = get_post_meta( $post->ID, '_wpste_lang_code', true ) ?: 'en';
+		$current_lang = 'en'; // Always English for source
+
+		// Get existing translations
+		global $wpdb;
+		$translations = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT lang_code, translated_at, characters_translated, provider_used
+				FROM {$wpdb->prefix}wpste_post_translations
+				WHERE post_id = %d
+				AND status = 'published'
+				ORDER BY created_at DESC",
+				$post->ID
+			),
+			ARRAY_A
+		);
+
+		$translated_langs = wp_list_pluck( $translations, 'lang_code' );
 
 		wp_nonce_field( 'wpste_translate_post', 'wpste_translate_nonce' );
 
 		echo '<div class="wpste-metabox">';
-		echo '<p><strong>' . esc_html__( 'Current Language:', 'wp-smart-translation-engine' ) . '</strong> ' . esc_html( strtoupper( $current_lang ) ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Source Language:', 'wp-smart-translation-engine' ) . '</strong> ' . esc_html( strtoupper( $current_lang ) ) . '</p>';
 
-		echo '<p><label for="wpste_target_lang">' . esc_html__( 'Translate to:', 'wp-smart-translation-engine' ) . '</label>';
-		echo '<select id="wpste_target_lang" name="wpste_target_lang">';
-		foreach ( $enabled_langs as $lang ) {
-			if ( $lang !== $current_lang ) {
+		// Show existing translations
+		if ( ! empty( $translations ) ) {
+			echo '<div style="margin: 15px 0; padding: 10px; background: #f0f0f1; border-left: 3px solid #2271b1;">';
+			echo '<strong>' . esc_html__( 'Existing Translations:', 'wp-smart-translation-engine' ) . '</strong>';
+			echo '<ul style="margin: 5px 0 0 0; padding-left: 20px;">';
+			foreach ( $translations as $translation ) {
+				$date = date_i18n( get_option( 'date_format' ), strtotime( $translation['translated_at'] ) );
+				echo '<li>' . esc_html( strtoupper( $translation['lang_code'] ) ) . ' (' . esc_html( $date ) . ')</li>';
+			}
+			echo '</ul></div>';
+		}
+
+		// Show available languages to translate to
+		$available_langs = array_diff( $enabled_langs, $translated_langs, array( $current_lang ) );
+
+		if ( empty( $available_langs ) ) {
+			echo '<p style="color: #666;"><em>' . esc_html__( 'All enabled languages have been translated.', 'wp-smart-translation-engine' ) . '</em></p>';
+		} else {
+			echo '<p><label for="wpste_target_lang">' . esc_html__( 'Translate to:', 'wp-smart-translation-engine' ) . '</label>';
+			echo '<select id="wpste_target_lang" name="wpste_target_lang">';
+			echo '<option value="">' . esc_html__( '-- Select Language --', 'wp-smart-translation-engine' ) . '</option>';
+			foreach ( $available_langs as $lang ) {
 				echo '<option value="' . esc_attr( $lang ) . '">' . esc_html( strtoupper( $lang ) ) . '</option>';
 			}
-		}
-		echo '</select></p>';
+			echo '</select></p>';
 
-		echo '<p><button type="button" class="button button-primary wpste-translate-btn" data-post-id="' . esc_attr( $post->ID ) . '">';
-		echo esc_html__( 'Translate', 'wp-smart-translation-engine' );
-		echo '</button></p>';
+			echo '<p><button type="button" class="button button-primary wpste-translate-btn" data-post-id="' . esc_attr( $post->ID ) . '">';
+			echo esc_html__( 'Translate', 'wp-smart-translation-engine' );
+			echo '</button></p>';
+		}
 
 		echo '<div class="wpste-translation-status" style="display:none;"></div>';
 		echo '</div>';
@@ -248,11 +282,17 @@ class Admin {
 			wp_send_json_error( array( 'message' => $result['error'] ) );
 		}
 
+		$post = get_post( $post_id );
+		$lang_name = strtoupper( $target_lang );
+
 		wp_send_json_success(
 			array(
-				'message' => 'Translation created successfully',
-				'new_post_id' => $result['post_id'],
-				'edit_link' => get_edit_post_link( $result['post_id'] ),
+				'message'         => sprintf( 'Post translated to %s successfully! Translation stored in database.', $lang_name ),
+				'translation_id'  => $result['translation_id'],
+				'post_id'         => $post_id,
+				'target_lang'     => $target_lang,
+				'characters'      => $result['characters'],
+				'view_link'       => get_permalink( $post_id ) . '?lang=' . $target_lang,
 			)
 		);
 	}

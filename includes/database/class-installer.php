@@ -54,25 +54,28 @@ class Installer {
         ) $charset_collate;";
 		dbDelta( $sql );
 
-		// Translations table
-		$table_name = $wpdb->prefix . 'wpste_translations';
+		// Post Translations table (parent-child model)
+		$table_name = $wpdb->prefix . 'wpste_post_translations';
 		$sql = "CREATE TABLE $table_name (
             id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             post_id bigint(20) UNSIGNED NOT NULL,
-            source_post_id bigint(20) UNSIGNED DEFAULT NULL,
             lang_code varchar(10) NOT NULL,
-            translation_group varchar(36) NOT NULL,
+            translated_title text NOT NULL,
+            translated_content longtext NOT NULL,
+            translated_excerpt text DEFAULT NULL,
+            translation_group varchar(36) DEFAULT NULL,
             provider_used varchar(50) DEFAULT NULL,
             api_key_id bigint(20) UNSIGNED DEFAULT NULL,
-            status varchar(20) DEFAULT 'draft',
+            status varchar(20) DEFAULT 'published',
             translated_at datetime DEFAULT NULL,
             characters_translated int(11) DEFAULT 0,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             KEY post_id (post_id),
-            KEY source_post_id (source_post_id),
             KEY lang_code (lang_code),
+            KEY post_lang (post_id, lang_code),
+            UNIQUE KEY post_lang_unique (post_id, lang_code),
             KEY translation_group (translation_group),
             KEY status (status)
         ) $charset_collate;";

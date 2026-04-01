@@ -115,6 +115,16 @@ class Language_Switcher {
 			'1.0.0',
 			true
 		);
+
+		// Localize script with AJAX URL
+		wp_localize_script(
+			'wpste-language-switcher',
+			'wpsteLangSwitcher',
+			array(
+				'ajaxurl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'wpste_set_language' ),
+			)
+		);
 	}
 
 	/**

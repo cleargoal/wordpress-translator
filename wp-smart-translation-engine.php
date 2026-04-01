@@ -178,6 +178,42 @@ function wpste_deactivate(): void {
 register_deactivation_hook( __FILE__, 'wpste_deactivate' );
 
 /**
+ * AJAX handler for setting language session
+ *
+ * @return void
+ */
+function wpste_set_language_session_handler(): void {
+	if ( ! isset( $_POST['lang'] ) ) {
+		wp_send_json_error( array( 'message' => 'No language provided' ) );
+	}
+
+	$lang = sanitize_text_field( $_POST['lang'] );
+
+	// Validate language code (2 letter code)
+	if ( ! preg_match( '/^[a-z]{2}$/', $lang ) ) {
+		wp_send_json_error( array( 'message' => 'Invalid language code' ) );
+	}
+
+	// Start session if not started
+	if ( session_status() === PHP_SESSION_NONE ) {
+		session_start();
+	}
+
+	// Set session variable
+	$_SESSION['wpste_lang'] = $lang;
+
+	// Also set cookie as backup
+	setcookie( 'wpste_lang', $lang, time() + ( 365 * 24 * 60 * 60 ), '/' );
+
+	wp_send_json_success(
+		array(
+			'language' => $lang,
+			'message'  => 'Language preference saved',
+		)
+	);
+}
+
+/**
  * Begin execution of the plugin.
  *
  * Load dependencies and initialize the plugin.
@@ -264,12 +300,26 @@ function wpste_run(): void {
 	// Register language switcher shortcode
 	add_shortcode( 'wpste_language_switcher', array( $language_switcher, 'shortcode' ) );
 
+	// AJAX handler for setting language session
+	add_action( 'wp_ajax_wpste_set_language', 'wpste_set_language_session_handler' );
+	add_action( 'wp_ajax_nopriv_wpste_set_language', 'wpste_set_language_session_handler' );
+
 	// Register language switcher widget
 	require_once WPSTE_PLUGIN_DIR . 'public/class-language-switcher-widget.php';
 	add_action(
 		'widgets_init',
 		function () {
 			register_widget( 'WPSTE\Frontend\Language_Switcher_Widget' );
+		}
+	);
+
+	// Register language switcher Gutenberg block
+	require_once WPSTE_PLUGIN_DIR . 'admin/blocks/class-language-switcher-block.php';
+	add_action(
+		'init',
+		function () {
+			$block = new WPSTE\Admin\Blocks\Language_Switcher_Block();
+			$block->register();
 		}
 	);
 
