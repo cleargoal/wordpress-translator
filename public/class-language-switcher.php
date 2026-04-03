@@ -112,6 +112,7 @@ class Language_Switcher {
 		}
 
 		echo '<div class="wpste-auto-switcher" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() returns escaped HTML
 		echo $this->render( array( 'style' => 'flags', 'show_names' => false, 'show_flags' => true ) );
 		echo '</div>';
 	}
@@ -159,7 +160,7 @@ class Language_Switcher {
 
 		// Check URL parameter first
 		if ( isset( $_GET['lang'] ) ) {
-			return sanitize_text_field( $_GET['lang'] );
+			return sanitize_text_field( wp_unslash( $_GET['lang'] ) );
 		}
 
 		// Check session (global switching)
@@ -169,11 +170,11 @@ class Language_Switcher {
 
 		// Check cookie
 		if ( isset( $_COOKIE['wpste_lang'] ) ) {
-			return sanitize_text_field( $_COOKIE['wpste_lang'] );
+			return sanitize_text_field( wp_unslash( $_COOKIE['wpste_lang'] ) );
 		}
 
 		// Check subdirectory in URL
-		$uri = $_SERVER['REQUEST_URI'] ?? '';
+		$uri = wp_unslash( $_SERVER['REQUEST_URI'] ) ?? '';
 		if ( preg_match( '#^/([a-z]{2})/#', $uri, $matches ) ) {
 			return $matches[1];
 		}
@@ -209,7 +210,7 @@ class Language_Switcher {
 		$settings = get_option( 'wpste_settings', array() );
 		$url_structure = $settings['url_structure'] ?? 'parameter';
 
-		$current_url = ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+		$current_url = ( is_ssl() ? 'https://' : 'http://' ) . wp_unslash( $_SERVER['HTTP_HOST'] ) . wp_unslash( $_SERVER['REQUEST_URI'] );
 
 		// Remove existing language parameter or subdirectory
 		$current_url = remove_query_arg( 'lang', $current_url );

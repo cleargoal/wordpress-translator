@@ -52,20 +52,24 @@ class Language_Switcher_Widget extends \WP_Widget {
 		$show_flags = isset( $instance['show_flags'] ) ? (bool) $instance['show_flags'] : true;
 		$show_names = isset( $instance['show_names'] ) ? (bool) $instance['show_names'] : true;
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core widget args
 		echo $args['before_widget'];
 
 		if ( $title ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core widget args
 			echo $args['before_title'] . esc_html( $title ) . $args['after_title'];
 		}
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() returns escaped HTML
 		echo $this->switcher->render(
 			array(
-				'style'      => $style,
-				'show_flags' => $show_flags,
-				'show_names' => $show_names,
+				'style'      => $style, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal parameter, sanitized in update()
+				'show_flags' => $show_flags, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Boolean value, sanitized in update()
+				'show_names' => $show_names, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Boolean value, sanitized in update()
 			)
 		);
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core widget args
 		echo $args['after_widget'];
 	}
 

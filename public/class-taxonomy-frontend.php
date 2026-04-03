@@ -65,16 +65,16 @@ class Taxonomy_Frontend {
 	protected function get_current_language(): string {
 		// Check URL parameter
 		if ( isset( $_GET['lang'] ) ) {
-			return sanitize_text_field( $_GET['lang'] );
+			return sanitize_text_field( wp_unslash( $_GET['lang'] ) );
 		}
 
 		// Check cookie
 		if ( isset( $_COOKIE['wpste_lang'] ) ) {
-			return sanitize_text_field( $_COOKIE['wpste_lang'] );
+			return sanitize_text_field( wp_unslash( $_COOKIE['wpste_lang'] ) );
 		}
 
 		// Check subdirectory in URL
-		$uri = $_SERVER['REQUEST_URI'] ?? '';
+		$uri = wp_unslash( $_SERVER['REQUEST_URI'] ) ?? '';
 		if ( preg_match( '#^/([a-z]{2})/#', $uri, $matches ) ) {
 			return $matches[1];
 		}

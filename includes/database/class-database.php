@@ -100,12 +100,15 @@ class Database {
 	public function get_row( string $table, array $where, string $output = OBJECT ) {
 		$where_clause = $this->build_where_clause( $where );
 
-		$sql = $this->wpdb->prepare(
-			"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
-			...$where_clause['values']
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		return $this->wpdb->get_row(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
+				...$where_clause['values']
+			),
+			$output
 		);
-
-		return $this->wpdb->get_row( $sql, $output );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 	}
 
 	/**
@@ -118,18 +121,24 @@ class Database {
 	 */
 	public function get_results( string $table, array $where = array(), string $output = OBJECT ): array {
 		if ( empty( $where ) ) {
-			$sql = "SELECT * FROM {$this->get_table_name($table)}";
-			return $this->wpdb->get_results( $sql, $output );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name cannot be prepared
+			return $this->wpdb->get_results(
+				"SELECT * FROM {$this->get_table_name($table)}",
+				$output
+			);
 		}
 
 		$where_clause = $this->build_where_clause( $where );
 
-		$sql = $this->wpdb->prepare(
-			"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
-			...$where_clause['values']
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		return $this->wpdb->get_results(
+			$this->wpdb->prepare(
+				"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
+				...$where_clause['values']
+			),
+			$output
 		);
-
-		return $this->wpdb->get_results( $sql, $output );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 	}
 
 	/**
@@ -162,6 +171,7 @@ class Database {
 	 * @return string|null
 	 */
 	public function get_var( string $query, int $column = 0, int $row = 0 ): ?string {
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Generic wrapper, caller responsible for query safety
 		return $this->wpdb->get_var( $query, $column, $row );
 	}
 
@@ -172,6 +182,7 @@ class Database {
 	 * @return int|bool Number of rows affected or false on error
 	 */
 	public function query( string $query ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Generic wrapper, caller responsible for query safety
 		return $this->wpdb->query( $query );
 	}
 }

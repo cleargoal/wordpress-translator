@@ -139,9 +139,13 @@ $wpste_tiers = array(
 		</div>
 	<?php else : ?>
 		<div class="notice notice-success">
-					/* translators: %s: Tier name (Free, Pro, Agency, or Enterprise) */
 			<p>
-				<strong><?php echo sprintf( esc_html__( 'Current Plan: %s', 'smart-translation-engine' ), esc_html( ucfirst( $wpste_current_tier ) ) ); ?></strong>
+				<strong>
+					<?php
+					/* translators: %s: Tier name (Free, Pro, Agency, or Enterprise) */
+					echo sprintf( esc_html__( 'Current Plan: %s', 'smart-translation-engine' ), esc_html( ucfirst( $wpste_current_tier ) ) );
+					?>
+				</strong>
 			</p>
 		</div>
 	<?php endif; ?>

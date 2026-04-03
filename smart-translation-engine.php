@@ -187,7 +187,7 @@ function wpste_set_language_session_handler(): void {
 		wp_send_json_error( array( 'message' => 'No language provided' ) );
 	}
 
-	$lang = sanitize_text_field( $_POST['lang'] );
+	$lang = sanitize_text_field( wp_unslash( $_POST['lang'] ) );
 
 	// Validate language code (2 letter code)
 	if ( ! preg_match( '/^[a-z]{2}$/', $lang ) ) {
@@ -223,13 +223,6 @@ function wpste_run(): void {
 	if ( file_exists( WPSTE_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 		require_once WPSTE_PLUGIN_DIR . 'vendor/autoload.php';
 	}
-
-	// Load plugin text domain for translations
-	load_plugin_textdomain(
-		'smart-translation-engine',
-		false,
-		dirname( WPSTE_PLUGIN_BASENAME ) . '/languages/'
-	);
 
 	// Load core classes
 	require_once WPSTE_PLUGIN_DIR . 'includes/database/class-database.php';

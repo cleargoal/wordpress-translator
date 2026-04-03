@@ -194,6 +194,6 @@ abstract class Abstract_Translation_Provider implements Translation_Provider_Int
 	 * @return int Character count
 	 */
 	protected function count_characters( string $text ): int {
-		return mb_strlen( strip_tags( $text ), 'UTF-8' );
+		return mb_strlen( wp_strip_all_tags( $text ), 'UTF-8' );
 	}
 }

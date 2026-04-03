@@ -179,7 +179,7 @@ class PublicFrontend {
 	protected function get_current_language(): string {
 		// Check URL parameter FIRST (allows explicit language switching)
 		if ( isset( $_GET['lang'] ) ) {
-			$lang = sanitize_text_field( $_GET['lang'] );
+			$lang = sanitize_text_field( wp_unslash( $_GET['lang'] ) );
 			// Save to session for persistence
 			$_SESSION['wpste_lang'] = $lang;
 			return $lang;
@@ -192,14 +192,14 @@ class PublicFrontend {
 
 		// Check cookie
 		if ( isset( $_COOKIE['wpste_lang'] ) ) {
-			$lang = sanitize_text_field( $_COOKIE['wpste_lang'] );
+			$lang = sanitize_text_field( wp_unslash( $_COOKIE['wpste_lang'] ) );
 			// Save to session for consistency
 			$_SESSION['wpste_lang'] = $lang;
 			return $lang;
 		}
 
 		// Check subdirectory in URL
-		$uri = $_SERVER['REQUEST_URI'] ?? '';
+		$uri = wp_unslash( $_SERVER['REQUEST_URI'] ) ?? '';
 		if ( preg_match( '#^/([a-z]{2})/#', $uri, $matches ) ) {
 			$lang = $matches[1];
 			$_SESSION['wpste_lang'] = $lang;
@@ -216,7 +216,7 @@ class PublicFrontend {
 	public function add_language_meta(): void {
 		if ( is_singular() ) {
 			$lang = $this->current_lang ?? 'en';
-			echo '<meta property="og:locale" content="' . esc_attr( $lang ) . '_' . strtoupper( $lang ) . '" />' . "\n";
+			echo '<meta property="og:locale" content="' . esc_attr( $lang ) . '_' . esc_attr( strtoupper( $lang ) ) . '" />' . "\n";
 			echo '<meta name="language" content="' . esc_attr( $lang ) . '" />' . "\n";
 		}
 	}

@@ -64,7 +64,6 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( wp_unslash( $_PO
 
 		if ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >= $wpste_max_keys ) {
 			/* translators: %d: Maximum number of API keys allowed */
-			/* translators: %d: Maximum number of API keys allowed */
 			$wpste_message = sprintf(
 				__( 'Free tier is limited to %d API key. Please upgrade to add more keys for multi-key rotation.', 'smart-translation-engine' ),
 				$wpste_max_keys
@@ -154,9 +153,9 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'toggle' && isset( $_GET['k
 		);
 
 		if ( $wpste_updated !== false ) {
-			/* translators: %s: API key status (activated or deactivated) */
 			delete_transient( 'wpste_api_keys_' . $wpste_key_data->provider );
 			$wpste_status_text = $wpste_new_status ? __( 'activated', 'smart-translation-engine' ) : __( 'deactivated', 'smart-translation-engine' );
+			/* translators: %s: API key status (activated or deactivated) */
 			$wpste_message = sprintf( __( 'API Key %s successfully.', 'smart-translation-engine' ), $wpste_status_text );
 			$wpste_message_type = 'success';
 		}
@@ -212,8 +211,8 @@ $wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >=
 				<div class="notice notice-warning inline">
 					<p>
 						<strong><?php echo esc_html__( 'Free Tier Limit Reached', 'smart-translation-engine' ); ?></strong><br>
-					/* translators: %d: Maximum number of API keys allowed */
 						<?php
+						/* translators: %d: Maximum number of API keys allowed */
 						printf(
 							esc_html__( 'Free tier is limited to %d API key. Upgrade to a paid plan to add multiple keys for smart quota rotation.', 'smart-translation-engine' ),
 							(int) $wpste_max_keys
@@ -412,8 +411,8 @@ $wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >=
 											<?php endif; ?>
 											<td>
 												<?php
-												/* translators: %s: Number of characters used */
 												$wpste_usage = number_format( $wpste_key->characters_used );
+												/* translators: %s: Number of characters used */
 												printf(
 													esc_html__( '%s chars', 'smart-translation-engine' ),
 													esc_html( $wpste_usage )
@@ -424,8 +423,8 @@ $wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >=
 												<?php
 												if ( $wpste_key->quota_limit ) {
 													$wpste_limit = number_format( $wpste_key->quota_limit );
-													/* translators: %1$s: Quota limit in characters, %2$d: Percentage used */
 													$wpste_percentage = ( $wpste_key->characters_used / $wpste_key->quota_limit ) * 100;
+													/* translators: %1$s: Quota limit in characters, %2$d: Percentage used */
 													printf(
 														esc_html__( '%1$s chars (%2$d%%)', 'smart-translation-engine' ),
 														esc_html( $wpste_limit ),
