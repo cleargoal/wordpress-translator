@@ -12,83 +12,83 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Get term info
-$term_id = isset( $_GET['tag_ID'] ) ? absint( $_GET['tag_ID'] ) : 0;
-if ( ! $term_id ) {
+$wpste_term_id = isset( $_GET['tag_ID'] ) ? absint( $_GET['tag_ID'] ) : 0;
+if ( ! $wpste_term_id ) {
 	return;
 }
 
 // Get settings
-$settings = get_option( 'wpste_settings', array() );
-$enabled_langs = $settings['enabled_languages'] ?? array( 'en' );
+$wpste_settings = get_option( 'wpste_settings', array() );
+$wpste_enabled_langs = $wpste_settings['enabled_languages'] ?? array( 'en' );
 
 // Get existing translations
-$translator = new \WPSTE\Core\Taxonomy_Translator();
-$translations = $translator->get_all_term_translations( $term_id );
+$wpste_translator = new \WPSTE\Core\Taxonomy_Translator();
+$wpste_translations = $wpste_translator->get_all_term_translations( $wpste_term_id );
 
 // Language names
-$language_names = array(
-	'en' => __( 'English', 'wp-smart-translation-engine' ),
-	'uk' => __( 'Ukrainian', 'wp-smart-translation-engine' ),
-	'de' => __( 'German', 'wp-smart-translation-engine' ),
-	'fr' => __( 'French', 'wp-smart-translation-engine' ),
-	'es' => __( 'Spanish', 'wp-smart-translation-engine' ),
-	'it' => __( 'Italian', 'wp-smart-translation-engine' ),
-	'pt' => __( 'Portuguese', 'wp-smart-translation-engine' ),
-	'pl' => __( 'Polish', 'wp-smart-translation-engine' ),
-	'ru' => __( 'Russian', 'wp-smart-translation-engine' ),
-	'ja' => __( 'Japanese', 'wp-smart-translation-engine' ),
-	'zh' => __( 'Chinese', 'wp-smart-translation-engine' ),
-	'ar' => __( 'Arabic', 'wp-smart-translation-engine' ),
-	'nl' => __( 'Dutch', 'wp-smart-translation-engine' ),
-	'sv' => __( 'Swedish', 'wp-smart-translation-engine' ),
-	'da' => __( 'Danish', 'wp-smart-translation-engine' ),
-	'fi' => __( 'Finnish', 'wp-smart-translation-engine' ),
-	'no' => __( 'Norwegian', 'wp-smart-translation-engine' ),
-	'cs' => __( 'Czech', 'wp-smart-translation-engine' ),
-	'el' => __( 'Greek', 'wp-smart-translation-engine' ),
-	'he' => __( 'Hebrew', 'wp-smart-translation-engine' ),
-	'hi' => __( 'Hindi', 'wp-smart-translation-engine' ),
-	'ko' => __( 'Korean', 'wp-smart-translation-engine' ),
-	'tr' => __( 'Turkish', 'wp-smart-translation-engine' ),
+$wpste_language_names = array(
+	'en' => __( 'English', 'smart-translation-engine' ),
+	'uk' => __( 'Ukrainian', 'smart-translation-engine' ),
+	'de' => __( 'German', 'smart-translation-engine' ),
+	'fr' => __( 'French', 'smart-translation-engine' ),
+	'es' => __( 'Spanish', 'smart-translation-engine' ),
+	'it' => __( 'Italian', 'smart-translation-engine' ),
+	'pt' => __( 'Portuguese', 'smart-translation-engine' ),
+	'pl' => __( 'Polish', 'smart-translation-engine' ),
+	'ru' => __( 'Russian', 'smart-translation-engine' ),
+	'ja' => __( 'Japanese', 'smart-translation-engine' ),
+	'zh' => __( 'Chinese', 'smart-translation-engine' ),
+	'ar' => __( 'Arabic', 'smart-translation-engine' ),
+	'nl' => __( 'Dutch', 'smart-translation-engine' ),
+	'sv' => __( 'Swedish', 'smart-translation-engine' ),
+	'da' => __( 'Danish', 'smart-translation-engine' ),
+	'fi' => __( 'Finnish', 'smart-translation-engine' ),
+	'no' => __( 'Norwegian', 'smart-translation-engine' ),
+	'cs' => __( 'Czech', 'smart-translation-engine' ),
+	'el' => __( 'Greek', 'smart-translation-engine' ),
+	'he' => __( 'Hebrew', 'smart-translation-engine' ),
+	'hi' => __( 'Hindi', 'smart-translation-engine' ),
+	'ko' => __( 'Korean', 'smart-translation-engine' ),
+	'tr' => __( 'Turkish', 'smart-translation-engine' ),
 );
 
 // Build translations map
-$translations_map = array();
-foreach ( $translations as $trans ) {
-	$translations_map[ $trans['lang_code'] ] = $trans;
+$wpste_translations_map = array();
+foreach ( $wpste_translations as $wpste_trans ) {
+	$wpste_translations_map[ $wpste_trans['lang_code'] ] = $wpste_trans;
 }
 
 ?>
 
 <tr class="form-field wpste-term-translation-field">
 	<th scope="row">
-		<label><?php echo esc_html__( 'Translation', 'wp-smart-translation-engine' ); ?></label>
+		<label><?php echo esc_html__( 'Translation', 'smart-translation-engine' ); ?></label>
 	</th>
 	<td>
 		<div class="wpste-term-translation-box">
-			<h4><?php echo esc_html__( 'Translate this term', 'wp-smart-translation-engine' ); ?></h4>
+			<h4><?php echo esc_html__( 'Translate this term', 'smart-translation-engine' ); ?></h4>
 
-			<?php if ( count( $enabled_langs ) > 1 ) : ?>
+			<?php if ( count( $wpste_enabled_langs ) > 1 ) : ?>
 
 				<p class="description">
-					<?php echo esc_html__( 'Select a language and click "Translate" to create a translation.', 'wp-smart-translation-engine' ); ?>
+					<?php echo esc_html__( 'Select a language and click "Translate" to create a translation.', 'smart-translation-engine' ); ?>
 				</p>
 
 				<div class="wpste-translation-controls">
-					<label for="wpste_target_lang"><?php echo esc_html__( 'Target Language:', 'wp-smart-translation-engine' ); ?></label>
+					<label for="wpste_target_lang"><?php echo esc_html__( 'Target Language:', 'smart-translation-engine' ); ?></label>
 					<select id="wpste_target_lang" name="wpste_target_lang">
-						<option value=""><?php echo esc_html__( 'Select language', 'wp-smart-translation-engine' ); ?></option>
-						<?php foreach ( $enabled_langs as $lang ) : ?>
-							<?php if ( ! isset( $translations_map[ $lang ] ) ) : ?>
-								<option value="<?php echo esc_attr( $lang ); ?>">
-									<?php echo esc_html( $language_names[ $lang ] ?? strtoupper( $lang ) ); ?>
+						<option value=""><?php echo esc_html__( 'Select language', 'smart-translation-engine' ); ?></option>
+						<?php foreach ( $wpste_enabled_langs as $wpste_lang ) : ?>
+							<?php if ( ! isset( $wpste_translations_map[ $wpste_lang ] ) ) : ?>
+								<option value="<?php echo esc_attr( $wpste_lang ); ?>">
+									<?php echo esc_html( $wpste_language_names[ $wpste_lang ] ?? strtoupper( $wpste_lang ) ); ?>
 								</option>
 							<?php endif; ?>
 						<?php endforeach; ?>
 					</select>
 
-					<button type="button" class="button button-primary wpste-translate-term-btn" data-term-id="<?php echo esc_attr( $term_id ); ?>">
-						<?php echo esc_html__( 'Translate', 'wp-smart-translation-engine' ); ?>
+					<button type="button" class="button button-primary wpste-translate-term-btn" data-term-id="<?php echo esc_attr( $wpste_term_id ); ?>">
+						<?php echo esc_html__( 'Translate', 'smart-translation-engine' ); ?>
 					</button>
 
 					<span class="wpste-translation-spinner spinner"></span>
@@ -96,28 +96,28 @@ foreach ( $translations as $trans ) {
 
 				<div class="wpste-translation-message" style="display:none; margin-top: 10px;"></div>
 
-				<?php if ( ! empty( $translations ) ) : ?>
-					<h4 style="margin-top: 20px;"><?php echo esc_html__( 'Existing Translations', 'wp-smart-translation-engine' ); ?></h4>
+				<?php if ( ! empty( $wpste_translations ) ) : ?>
+					<h4 style="margin-top: 20px;"><?php echo esc_html__( 'Existing Translations', 'smart-translation-engine' ); ?></h4>
 					<table class="widefat fixed striped">
 						<thead>
 							<tr>
-								<th><?php echo esc_html__( 'Language', 'wp-smart-translation-engine' ); ?></th>
-								<th><?php echo esc_html__( 'Translated Name', 'wp-smart-translation-engine' ); ?></th>
-								<th><?php echo esc_html__( 'Translated At', 'wp-smart-translation-engine' ); ?></th>
-								<th><?php echo esc_html__( 'Actions', 'wp-smart-translation-engine' ); ?></th>
+								<th><?php echo esc_html__( 'Language', 'smart-translation-engine' ); ?></th>
+								<th><?php echo esc_html__( 'Translated Name', 'smart-translation-engine' ); ?></th>
+								<th><?php echo esc_html__( 'Translated At', 'smart-translation-engine' ); ?></th>
+								<th><?php echo esc_html__( 'Actions', 'smart-translation-engine' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
-							<?php foreach ( $translations as $trans ) : ?>
+							<?php foreach ( $wpste_translations as $wpste_trans ) : ?>
 								<tr>
-									<td><strong><?php echo esc_html( $language_names[ $trans['lang_code'] ] ?? strtoupper( $trans['lang_code'] ) ); ?></strong></td>
-									<td><?php echo esc_html( $trans['translated_name'] ); ?></td>
-									<td><?php echo esc_html( $trans['translated_at'] ); ?></td>
+									<td><strong><?php echo esc_html( $wpste_language_names[ $wpste_trans['lang_code'] ] ?? strtoupper( $wpste_trans['lang_code'] ) ); ?></strong></td>
+									<td><?php echo esc_html( $wpste_trans['translated_name'] ); ?></td>
+									<td><?php echo esc_html( $wpste_trans['translated_at'] ); ?></td>
 									<td>
 										<button type="button" class="button button-small wpste-delete-term-translation"
-												data-term-id="<?php echo esc_attr( $term_id ); ?>"
-												data-lang="<?php echo esc_attr( $trans['lang_code'] ); ?>">
-											<?php echo esc_html__( 'Delete', 'wp-smart-translation-engine' ); ?>
+												data-term-id="<?php echo esc_attr( $wpste_term_id ); ?>"
+												data-lang="<?php echo esc_attr( $wpste_trans['lang_code'] ); ?>">
+											<?php echo esc_html__( 'Delete', 'smart-translation-engine' ); ?>
 										</button>
 									</td>
 								</tr>
@@ -131,8 +131,8 @@ foreach ( $translations as $trans ) {
 					<?php
 					printf(
 						/* translators: %s: Settings page URL */
-						esc_html__( 'Please enable more languages in %s to use translation feature.', 'wp-smart-translation-engine' ),
-						'<a href="' . esc_url( admin_url( 'admin.php?page=wpste-settings' ) ) . '">' . esc_html__( 'Settings', 'wp-smart-translation-engine' ) . '</a>'
+						esc_html__( 'Please enable more languages in %s to use translation feature.', 'smart-translation-engine' ),
+						'<a href="' . esc_url( admin_url( 'admin.php?page=wpste-settings' ) ) . '">' . esc_html__( 'Settings', 'smart-translation-engine' ) . '</a>'
 					);
 					?>
 				</p>

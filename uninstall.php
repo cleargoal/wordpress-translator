@@ -14,7 +14,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 global $wpdb;
 
 // Delete plugin tables
-$tables = array(
+$wpste_tables = array(
 	$wpdb->prefix . 'wpste_api_keys',
 	$wpdb->prefix . 'wpste_translations',
 	$wpdb->prefix . 'wpste_licenses',
@@ -22,8 +22,8 @@ $tables = array(
 	$wpdb->prefix . 'wpste_quota_alerts',
 );
 
-foreach ( $tables as $table ) {
-	$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+foreach ( $wpste_tables as $wpste_table ) {
+	$wpdb->query( "DROP TABLE IF EXISTS {$wpste_table}" );
 }
 
 // Delete plugin options

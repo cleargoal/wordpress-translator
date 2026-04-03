@@ -46,7 +46,7 @@ class Taxonomy_Translator {
 		// Get term details
 		$term = get_term( $term_id );
 		if ( is_wp_error( $term ) || ! $term ) {
-			return array( 'error' => __( 'Term not found.', 'wp-smart-translation-engine' ) );
+			return array( 'error' => __( 'Term not found.', 'smart-translation-engine' ) );
 		}
 
 		// Get source language
@@ -62,7 +62,7 @@ class Taxonomy_Translator {
 		);
 
 		if ( $existing ) {
-			return array( 'error' => __( 'Translation already exists for this language.', 'wp-smart-translation-engine' ) );
+			return array( 'error' => __( 'Translation already exists for this language.', 'smart-translation-engine' ) );
 		}
 
 		// Generate or get translation group
@@ -127,7 +127,7 @@ class Taxonomy_Translator {
 		);
 
 		if ( ! $inserted ) {
-			return array( 'error' => __( 'Failed to save translation.', 'wp-smart-translation-engine' ) );
+			return array( 'error' => __( 'Failed to save translation.', 'smart-translation-engine' ) );
 		}
 
 		// Trigger action hook

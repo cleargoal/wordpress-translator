@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       WP Smart Translation Engine
+ * Plugin Name:       Smart Translation Engine
  * Plugin URI:        https://github.com/cleargoal/wordpress-translator
  * Description:       Multi-provider AI translation for WordPress posts and pages. Supports DeepL, Azure Translator, and AWS Translate with smart key rotation and quota management.
  * Version:           1.0.0
@@ -10,10 +10,10 @@
  * Author URI:        https://github.com/cleargoal
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       wp-smart-translation-engine
+ * Text Domain:       smart-translation-engine
  * Domain Path:       /languages
  *
- * @package           WP_Smart_Translation_Engine
+ * @package           Smart_Translation_Engine
  */
 
 declare(strict_types=1);
@@ -226,7 +226,7 @@ function wpste_run(): void {
 
 	// Load plugin text domain for translations
 	load_plugin_textdomain(
-		'wp-smart-translation-engine',
+		'smart-translation-engine',
 		false,
 		dirname( WPSTE_PLUGIN_BASENAME ) . '/languages/'
 	);

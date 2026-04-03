@@ -10,115 +10,115 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Get current tier
-$license = get_option( 'wpste_license', array( 'tier' => 'free' ) );
-$current_tier = $license['tier'] ?? 'free';
+$wpste_license = get_option( 'wpste_license', array( 'tier' => 'free' ) );
+$wpste_current_tier = $wpste_license['tier'] ?? 'free';
 
 // Define all tiers with features
-$tiers = array(
+$wpste_tiers = array(
 	'free'       => array(
-		'name'       => __( 'Free', 'wp-smart-translation-engine' ),
-		'price'      => __( 'Free Forever', 'wp-smart-translation-engine' ),
+		'name'       => __( 'Free', 'smart-translation-engine' ),
+		'price'      => __( 'Free Forever', 'smart-translation-engine' ),
 		'languages'  => 3,
 		'api_keys'   => 1,
 		'features'   => array(
-			__( '3 languages', 'wp-smart-translation-engine' ),
-			__( '1 API key (no rotation)', 'wp-smart-translation-engine' ),
-			__( '1 provider choice', 'wp-smart-translation-engine' ),
-			__( 'Post & page translation', 'wp-smart-translation-engine' ),
-			__( 'Basic support', 'wp-smart-translation-engine' ),
+			__( '3 languages', 'smart-translation-engine' ),
+			__( '1 API key (no rotation)', 'smart-translation-engine' ),
+			__( '1 provider choice', 'smart-translation-engine' ),
+			__( 'Post & page translation', 'smart-translation-engine' ),
+			__( 'Basic support', 'smart-translation-engine' ),
 		),
 		'cta'        => '',
 		'recommended' => false,
 	),
 	'starter'    => array(
-		'name'       => __( 'Starter', 'wp-smart-translation-engine' ),
+		'name'       => __( 'Starter', 'smart-translation-engine' ),
 		'price'      => '$9/month',
 		'languages'  => 5,
 		'api_keys'   => 3,
 		'features'   => array(
-			__( '5 languages', 'wp-smart-translation-engine' ),
-			__( 'Up to 3 API keys with rotation', 'wp-smart-translation-engine' ),
-			__( 'Multiple providers', 'wp-smart-translation-engine' ),
-			__( 'Post, page & custom post types', 'wp-smart-translation-engine' ),
-			__( 'Priority support', 'wp-smart-translation-engine' ),
+			__( '5 languages', 'smart-translation-engine' ),
+			__( 'Up to 3 API keys with rotation', 'smart-translation-engine' ),
+			__( 'Multiple providers', 'smart-translation-engine' ),
+			__( 'Post, page & custom post types', 'smart-translation-engine' ),
+			__( 'Priority support', 'smart-translation-engine' ),
 		),
 		'cta'        => 'Buy Starter',
 		'recommended' => false,
 	),
 	'basic'      => array(
-		'name'       => __( 'Basic', 'wp-smart-translation-engine' ),
+		'name'       => __( 'Basic', 'smart-translation-engine' ),
 		'price'      => '$19/month',
 		'languages'  => 10,
 		'api_keys'   => 5,
 		'features'   => array(
-			__( '10 languages', 'wp-smart-translation-engine' ),
-			__( 'Up to 5 API keys with smart rotation', 'wp-smart-translation-engine' ),
-			__( 'All providers with fallback', 'wp-smart-translation-engine' ),
-			__( 'Menu & widget translation', 'wp-smart-translation-engine' ),
-			__( 'Basic SEO support', 'wp-smart-translation-engine' ),
+			__( '10 languages', 'smart-translation-engine' ),
+			__( 'Up to 5 API keys with smart rotation', 'smart-translation-engine' ),
+			__( 'All providers with fallback', 'smart-translation-engine' ),
+			__( 'Menu & widget translation', 'smart-translation-engine' ),
+			__( 'Basic SEO support', 'smart-translation-engine' ),
 		),
 		'cta'        => 'Buy Basic',
 		'recommended' => false,
 	),
 	'plus'       => array(
-		'name'       => __( 'Plus', 'wp-smart-translation-engine' ),
+		'name'       => __( 'Plus', 'smart-translation-engine' ),
 		'price'      => '$39/month',
 		'languages'  => 15,
 		'api_keys'   => 10,
 		'features'   => array(
-			__( '15 languages', 'wp-smart-translation-engine' ),
-			__( 'Up to 10 API keys with smart rotation', 'wp-smart-translation-engine' ),
-			__( 'Custom fields translation (ACF, etc)', 'wp-smart-translation-engine' ),
-			__( 'Taxonomy translation', 'wp-smart-translation-engine' ),
-			__( 'Advanced SEO integration', 'wp-smart-translation-engine' ),
+			__( '15 languages', 'smart-translation-engine' ),
+			__( 'Up to 10 API keys with smart rotation', 'smart-translation-engine' ),
+			__( 'Custom fields translation (ACF, etc)', 'smart-translation-engine' ),
+			__( 'Taxonomy translation', 'smart-translation-engine' ),
+			__( 'Advanced SEO integration', 'smart-translation-engine' ),
 		),
 		'cta'        => 'Buy Plus',
 		'recommended' => true,
 	),
 	'pro'        => array(
-		'name'       => __( 'Pro', 'wp-smart-translation-engine' ),
+		'name'       => __( 'Pro', 'smart-translation-engine' ),
 		'price'      => '$79/month',
 		'languages'  => 25,
 		'api_keys'   => -1,
 		'features'   => array(
-			__( '25 languages', 'wp-smart-translation-engine' ),
-			__( 'Unlimited API keys', 'wp-smart-translation-engine' ),
-			__( 'Translation Memory', 'wp-smart-translation-engine' ),
-			__( 'Glossary management', 'wp-smart-translation-engine' ),
-			__( 'Bulk operations', 'wp-smart-translation-engine' ),
-			__( 'Premium support', 'wp-smart-translation-engine' ),
+			__( '25 languages', 'smart-translation-engine' ),
+			__( 'Unlimited API keys', 'smart-translation-engine' ),
+			__( 'Translation Memory', 'smart-translation-engine' ),
+			__( 'Glossary management', 'smart-translation-engine' ),
+			__( 'Bulk operations', 'smart-translation-engine' ),
+			__( 'Premium support', 'smart-translation-engine' ),
 		),
 		'cta'        => 'Buy Pro',
 		'recommended' => false,
 	),
 	'agency'     => array(
-		'name'       => __( 'Agency', 'wp-smart-translation-engine' ),
+		'name'       => __( 'Agency', 'smart-translation-engine' ),
 		'price'      => '$149/month',
 		'languages'  => -1,
 		'api_keys'   => -1,
 		'features'   => array(
-			__( 'Unlimited languages', 'wp-smart-translation-engine' ),
-			__( 'Unlimited API keys', 'wp-smart-translation-engine' ),
-			__( 'White-label branding', 'wp-smart-translation-engine' ),
-			__( 'SEO integration (Yoast, Rank Math, AIOSEO)', 'wp-smart-translation-engine' ),
-			__( 'Client management', 'wp-smart-translation-engine' ),
-			__( 'Priority support', 'wp-smart-translation-engine' ),
+			__( 'Unlimited languages', 'smart-translation-engine' ),
+			__( 'Unlimited API keys', 'smart-translation-engine' ),
+			__( 'White-label branding', 'smart-translation-engine' ),
+			__( 'SEO integration (Yoast, Rank Math, AIOSEO)', 'smart-translation-engine' ),
+			__( 'Client management', 'smart-translation-engine' ),
+			__( 'Priority support', 'smart-translation-engine' ),
 		),
 		'cta'        => 'Buy Agency',
 		'recommended' => false,
 	),
 	'enterprise' => array(
-		'name'       => __( 'Enterprise', 'wp-smart-translation-engine' ),
+		'name'       => __( 'Enterprise', 'smart-translation-engine' ),
 		'price'      => '$299/month',
 		'languages'  => -1,
 		'api_keys'   => -1,
 		'features'   => array(
-			__( 'Everything in Agency', 'wp-smart-translation-engine' ),
-			__( 'Team management & roles', 'wp-smart-translation-engine' ),
-			__( 'Approval workflows', 'wp-smart-translation-engine' ),
-			__( 'Advanced analytics & reporting', 'wp-smart-translation-engine' ),
-			__( 'Dedicated support', 'wp-smart-translation-engine' ),
-			__( 'Custom development available', 'wp-smart-translation-engine' ),
+			__( 'Everything in Agency', 'smart-translation-engine' ),
+			__( 'Team management & roles', 'smart-translation-engine' ),
+			__( 'Approval workflows', 'smart-translation-engine' ),
+			__( 'Advanced analytics & reporting', 'smart-translation-engine' ),
+			__( 'Dedicated support', 'smart-translation-engine' ),
+			__( 'Custom development available', 'smart-translation-engine' ),
 		),
 		'cta'        => 'Contact Sales',
 		'recommended' => false,
@@ -128,49 +128,50 @@ $tiers = array(
 ?>
 
 <div class="wrap wpste-upgrade-page">
-	<h1><?php echo esc_html__( 'Upgrade Your Plan', 'wp-smart-translation-engine' ); ?></h1>
+	<h1><?php echo esc_html__( 'Upgrade Your Plan', 'smart-translation-engine' ); ?></h1>
 
-	<?php if ( $current_tier === 'free' ) : ?>
+	<?php if ( $wpste_current_tier === 'free' ) : ?>
 		<div class="notice notice-info">
 			<p>
-				<strong><?php echo esc_html__( 'You are currently on the Free plan.', 'wp-smart-translation-engine' ); ?></strong>
-				<?php echo esc_html__( 'Upgrade to unlock more languages, API key rotation, and premium features.', 'wp-smart-translation-engine' ); ?>
+				<strong><?php echo esc_html__( 'You are currently on the Free plan.', 'smart-translation-engine' ); ?></strong>
+				<?php echo esc_html__( 'Upgrade to unlock more languages, API key rotation, and premium features.', 'smart-translation-engine' ); ?>
 			</p>
 		</div>
 	<?php else : ?>
 		<div class="notice notice-success">
+					/* translators: %s: Tier name (Free, Pro, Agency, or Enterprise) */
 			<p>
-				<strong><?php echo sprintf( esc_html__( 'Current Plan: %s', 'wp-smart-translation-engine' ), esc_html( ucfirst( $current_tier ) ) ); ?></strong>
+				<strong><?php echo sprintf( esc_html__( 'Current Plan: %s', 'smart-translation-engine' ), esc_html( ucfirst( $wpste_current_tier ) ) ); ?></strong>
 			</p>
 		</div>
 	<?php endif; ?>
 
 	<div class="wpste-pricing-table">
-		<?php foreach ( $tiers as $tier_key => $tier ) : ?>
-			<div class="wpste-pricing-card <?php echo $tier['recommended'] ? 'recommended' : ''; ?> <?php echo $tier_key === $current_tier ? 'current' : ''; ?>">
+		<?php foreach ( $wpste_tiers as $wpste_tier_key => $wpste_tier ) : ?>
+			<div class="wpste-pricing-card <?php echo $wpste_tier['recommended'] ? 'recommended' : ''; ?> <?php echo $wpste_tier_key === $wpste_current_tier ? 'current' : ''; ?>">
 
-				<?php if ( $tier['recommended'] ) : ?>
-					<div class="recommended-badge"><?php echo esc_html__( 'Most Popular', 'wp-smart-translation-engine' ); ?></div>
+				<?php if ( $wpste_tier['recommended'] ) : ?>
+					<div class="recommended-badge"><?php echo esc_html__( 'Most Popular', 'smart-translation-engine' ); ?></div>
 				<?php endif; ?>
 
-				<?php if ( $tier_key === $current_tier ) : ?>
-					<div class="current-badge"><?php echo esc_html__( 'Current Plan', 'wp-smart-translation-engine' ); ?></div>
+				<?php if ( $wpste_tier_key === $wpste_current_tier ) : ?>
+					<div class="current-badge"><?php echo esc_html__( 'Current Plan', 'smart-translation-engine' ); ?></div>
 				<?php endif; ?>
 
-				<h2><?php echo esc_html( $tier['name'] ); ?></h2>
-				<div class="price"><?php echo esc_html( $tier['price'] ); ?></div>
+				<h2><?php echo esc_html( $wpste_tier['name'] ); ?></h2>
+				<div class="price"><?php echo esc_html( $wpste_tier['price'] ); ?></div>
 
 				<ul class="features-list">
-					<?php foreach ( $tier['features'] as $feature ) : ?>
-						<li><span class="dashicons dashicons-yes"></span> <?php echo esc_html( $feature ); ?></li>
+					<?php foreach ( $wpste_tier['features'] as $wpste_feature ) : ?>
+						<li><span class="dashicons dashicons-yes"></span> <?php echo esc_html( $wpste_feature ); ?></li>
 					<?php endforeach; ?>
 				</ul>
 
-				<?php if ( $tier_key === $current_tier ) : ?>
-					<button class="button button-disabled" disabled><?php echo esc_html__( 'Current Plan', 'wp-smart-translation-engine' ); ?></button>
-				<?php elseif ( ! empty( $tier['cta'] ) ) : ?>
-					<a href="#" class="button button-primary wpste-upgrade-button" data-tier="<?php echo esc_attr( $tier_key ); ?>">
-						<?php echo esc_html( $tier['cta'] ); ?>
+				<?php if ( $wpste_tier_key === $wpste_current_tier ) : ?>
+					<button class="button button-disabled" disabled><?php echo esc_html__( 'Current Plan', 'smart-translation-engine' ); ?></button>
+				<?php elseif ( ! empty( $wpste_tier['cta'] ) ) : ?>
+					<a href="#" class="button button-primary wpste-upgrade-button" data-tier="<?php echo esc_attr( $wpste_tier_key ); ?>">
+						<?php echo esc_html( $wpste_tier['cta'] ); ?>
 					</a>
 				<?php endif; ?>
 			</div>
@@ -178,18 +179,18 @@ $tiers = array(
 	</div>
 
 	<div class="wpste-upgrade-notice">
-		<h3><?php echo esc_html__( 'All Plans Include:', 'wp-smart-translation-engine' ); ?></h3>
+		<h3><?php echo esc_html__( 'All Plans Include:', 'smart-translation-engine' ); ?></h3>
 		<ul>
-			<li><?php echo esc_html__( 'Support for DeepL, Azure Translator, and AWS Translate', 'wp-smart-translation-engine' ); ?></li>
-			<li><?php echo esc_html__( 'Automatic quota tracking and management', 'wp-smart-translation-engine' ); ?></li>
-			<li><?php echo esc_html__( 'REST API and WP-CLI access', 'wp-smart-translation-engine' ); ?></li>
-			<li><?php echo esc_html__( 'Regular updates and security patches', 'wp-smart-translation-engine' ); ?></li>
+			<li><?php echo esc_html__( 'Support for DeepL, Azure Translator, and AWS Translate', 'smart-translation-engine' ); ?></li>
+			<li><?php echo esc_html__( 'Automatic quota tracking and management', 'smart-translation-engine' ); ?></li>
+			<li><?php echo esc_html__( 'REST API and WP-CLI access', 'smart-translation-engine' ); ?></li>
+			<li><?php echo esc_html__( 'Regular updates and security patches', 'smart-translation-engine' ); ?></li>
 		</ul>
 	</div>
 
 	<div class="wpste-help-section">
-		<h3><?php echo esc_html__( 'Need Help Choosing?', 'wp-smart-translation-engine' ); ?></h3>
-		<p><?php echo esc_html__( 'Contact us at', 'wp-smart-translation-engine' ); ?> <a href="mailto:cleargoal01@gmail.com">cleargoal01@gmail.com</a></p>
+		<h3><?php echo esc_html__( 'Need Help Choosing?', 'smart-translation-engine' ); ?></h3>
+		<p><?php echo esc_html__( 'Contact us at', 'smart-translation-engine' ); ?> <a href="mailto:cleargoal01@gmail.com">cleargoal01@gmail.com</a></p>
 	</div>
 </div>
 

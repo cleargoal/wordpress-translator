@@ -3,7 +3,7 @@ Contributors: cleargoal
 Donate link: https://github.com/cleargoal/wordpress-translator
 Tags: translation, multilingual, deepl, azure, aws
 Requires at least: 6.0
-Tested up to: 6.4
+Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
@@ -13,7 +13,7 @@ Multi-provider AI translation for WordPress. Supports DeepL, Azure Translator, a
 
 == Description ==
 
-WP Smart Translation Engine makes translating your WordPress content simple and powerful. Connect your DeepL, Azure Translator, or AWS Translate account and start translating posts, pages, and custom content in minutes.
+Smart Translation Engine makes translating your WordPress content simple and powerful. Connect your DeepL, Azure Translator, or AWS Translate account and start translating posts, pages, and custom content in minutes.
 
 = Key Features =
 
@@ -86,7 +86,7 @@ For bug reports and feature requests, please use our [GitHub Issues](https://git
 
 1. Log in to your WordPress admin panel
 2. Go to Plugins → Add New
-3. Search for "WP Smart Translation Engine"
+3. Search for "Smart Translation Engine"
 4. Click "Install Now" and then "Activate"
 
 = Manual Installation =
@@ -181,7 +181,7 @@ If you enable "product" post type in settings, yes. However, product-specific fi
 == Upgrade Notice ==
 
 = 1.0.0 =
-Initial release of WP Smart Translation Engine. Start translating your WordPress content with AI-powered translation providers!
+Initial release of Smart Translation Engine. Start translating your WordPress content with AI-powered translation providers!
 
 == Developer Documentation ==
 

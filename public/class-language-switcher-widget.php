@@ -31,9 +31,9 @@ class Language_Switcher_Widget extends \WP_Widget {
 	public function __construct() {
 		parent::__construct(
 			'wpste_language_switcher',
-			__( 'Language Switcher', 'wp-smart-translation-engine' ),
+			__( 'Language Switcher', 'smart-translation-engine' ),
 			array(
-				'description' => __( 'Display a language switcher for multilingual content', 'wp-smart-translation-engine' ),
+				'description' => __( 'Display a language switcher for multilingual content', 'smart-translation-engine' ),
 			)
 		);
 
@@ -76,14 +76,14 @@ class Language_Switcher_Widget extends \WP_Widget {
 	 * @return string
 	 */
 	public function form( $instance ) {
-		$title      = ! empty( $instance['title'] ) ? $instance['title'] : __( 'Languages', 'wp-smart-translation-engine' );
+		$title      = ! empty( $instance['title'] ) ? $instance['title'] : __( 'Languages', 'smart-translation-engine' );
 		$style      = ! empty( $instance['style'] ) ? $instance['style'] : 'dropdown';
 		$show_flags = isset( $instance['show_flags'] ) ? (bool) $instance['show_flags'] : true;
 		$show_names = isset( $instance['show_names'] ) ? (bool) $instance['show_names'] : true;
 		?>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>">
-				<?php esc_html_e( 'Title:', 'wp-smart-translation-engine' ); ?>
+				<?php esc_html_e( 'Title:', 'smart-translation-engine' ); ?>
 			</label>
 			<input
 				class="widefat"
@@ -96,7 +96,7 @@ class Language_Switcher_Widget extends \WP_Widget {
 
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'style' ) ); ?>">
-				<?php esc_html_e( 'Display Style:', 'wp-smart-translation-engine' ); ?>
+				<?php esc_html_e( 'Display Style:', 'smart-translation-engine' ); ?>
 			</label>
 			<select
 				class="widefat"
@@ -104,10 +104,10 @@ class Language_Switcher_Widget extends \WP_Widget {
 				name="<?php echo esc_attr( $this->get_field_name( 'style' ) ); ?>"
 			>
 				<option value="dropdown" <?php selected( $style, 'dropdown' ); ?>>
-					<?php esc_html_e( 'Dropdown', 'wp-smart-translation-engine' ); ?>
+					<?php esc_html_e( 'Dropdown', 'smart-translation-engine' ); ?>
 				</option>
 				<option value="flags" <?php selected( $style, 'flags' ); ?>>
-					<?php esc_html_e( 'Flags/Links', 'wp-smart-translation-engine' ); ?>
+					<?php esc_html_e( 'Flags/Links', 'smart-translation-engine' ); ?>
 				</option>
 			</select>
 		</p>
@@ -121,7 +121,7 @@ class Language_Switcher_Widget extends \WP_Widget {
 				<?php checked( $show_flags ); ?>
 			>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'show_flags' ) ); ?>">
-				<?php esc_html_e( 'Show flags', 'wp-smart-translation-engine' ); ?>
+				<?php esc_html_e( 'Show flags', 'smart-translation-engine' ); ?>
 			</label>
 		</p>
 
@@ -134,7 +134,7 @@ class Language_Switcher_Widget extends \WP_Widget {
 				<?php checked( $show_names ); ?>
 			>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'show_names' ) ); ?>">
-				<?php esc_html_e( 'Show language names', 'wp-smart-translation-engine' ); ?>
+				<?php esc_html_e( 'Show language names', 'smart-translation-engine' ); ?>
 			</label>
 		</p>
 		<?php
