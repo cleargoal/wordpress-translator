@@ -95,6 +95,25 @@ class Language_Switcher {
 
 		// Enqueue assets
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+
+		// Auto-inject switcher in header (if enabled)
+		add_action( 'wp_body_open', array( $this, 'auto_inject_switcher' ) );
+	}
+
+	/**
+	 * Auto-inject language switcher after body tag
+	 */
+	public function auto_inject_switcher(): void {
+		$settings = get_option( 'wpste_settings', array() );
+		$auto_inject = $settings['auto_inject_switcher'] ?? true; // Default: enabled
+
+		if ( ! $auto_inject ) {
+			return;
+		}
+
+		echo '<div class="wpste-auto-switcher" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">';
+		echo $this->render( array( 'style' => 'flags', 'show_names' => false, 'show_flags' => true ) );
+		echo '</div>';
 	}
 
 	/**
@@ -133,9 +152,19 @@ class Language_Switcher {
 	 * @return string Language code.
 	 */
 	protected function get_current_language(): string {
-		// Check URL parameter
+		// Start session if needed
+		if ( session_status() === PHP_SESSION_NONE ) {
+			session_start();
+		}
+
+		// Check URL parameter first
 		if ( isset( $_GET['lang'] ) ) {
 			return sanitize_text_field( $_GET['lang'] );
+		}
+
+		// Check session (global switching)
+		if ( ! empty( $_SESSION['wpste_lang'] ) ) {
+			return sanitize_text_field( $_SESSION['wpste_lang'] );
 		}
 
 		// Check cookie

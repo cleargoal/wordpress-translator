@@ -177,17 +177,17 @@ class PublicFrontend {
 	 * @return string Language code.
 	 */
 	protected function get_current_language(): string {
-		// Check session first (highest priority for global switching)
-		if ( ! empty( $_SESSION['wpste_lang'] ) ) {
-			return sanitize_text_field( $_SESSION['wpste_lang'] );
-		}
-
-		// Check URL parameter
+		// Check URL parameter FIRST (allows explicit language switching)
 		if ( isset( $_GET['lang'] ) ) {
 			$lang = sanitize_text_field( $_GET['lang'] );
 			// Save to session for persistence
 			$_SESSION['wpste_lang'] = $lang;
 			return $lang;
+		}
+
+		// Check session (persists across pages when no URL param)
+		if ( ! empty( $_SESSION['wpste_lang'] ) ) {
+			return sanitize_text_field( $_SESSION['wpste_lang'] );
 		}
 
 		// Check cookie

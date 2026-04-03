@@ -22,10 +22,38 @@ $message_type = '';
 
 if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( $_POST['wpste_add_key_nonce'], 'wpste_add_key' ) ) {
 	$provider = sanitize_text_field( $_POST['provider'] );
-	$api_key = sanitize_text_field( $_POST['api_key'] );
 	$label = sanitize_text_field( $_POST['label'] );
 	$quota_limit = ! empty( $_POST['quota_limit'] ) ? absint( $_POST['quota_limit'] ) : null;
-	$region = ( $provider === 'azure' && ! empty( $_POST['azure_region'] ) ) ? sanitize_text_field( $_POST['azure_region'] ) : null;
+	$region = null;
+	$api_key = '';
+
+	// Handle provider-specific credentials
+	if ( $provider === 'aws' ) {
+		// AWS requires Access Key ID, Secret Access Key, and Region
+		$access_key_id = sanitize_text_field( $_POST['aws_access_key_id'] ?? '' );
+		$secret_access_key = sanitize_text_field( $_POST['aws_secret_access_key'] ?? '' );
+		$aws_region = sanitize_text_field( $_POST['aws_region'] ?? 'us-east-1' );
+
+		if ( empty( $access_key_id ) || empty( $secret_access_key ) ) {
+			$message = __( 'AWS Access Key ID and Secret Access Key are required.', 'wp-smart-translation-engine' );
+			$message_type = 'error';
+		} else {
+			// Store AWS credentials as JSON
+			$api_key = wp_json_encode(
+				array(
+					'access_key_id'      => $access_key_id,
+					'secret_access_key'  => $secret_access_key,
+					'region'             => $aws_region,
+				)
+			);
+			$region = $aws_region;
+		}
+	} elseif ( $provider === 'azure' ) {
+		$api_key = sanitize_text_field( $_POST['api_key'] ?? '' );
+		$region = ! empty( $_POST['azure_region'] ) ? sanitize_text_field( $_POST['azure_region'] ) : null;
+	} else {
+		$api_key = sanitize_text_field( $_POST['api_key'] ?? '' );
+	}
 
 	if ( empty( $provider ) || empty( $api_key ) ) {
 		$message = __( 'Provider and API Key are required.', 'wp-smart-translation-engine' );
@@ -212,13 +240,54 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 								</select>
 							</td>
 						</tr>
-						<tr>
+						<tr id="api_key_row">
 							<th scope="row">
 								<label for="api_key"><?php echo esc_html__( 'API Key', 'wp-smart-translation-engine' ); ?> <span class="required">*</span></label>
 							</th>
 							<td>
-								<input type="text" name="api_key" id="api_key" class="regular-text" required>
+								<input type="text" name="api_key" id="api_key" class="regular-text">
 								<p class="description"><?php echo esc_html__( 'Your API key will be encrypted before storage.', 'wp-smart-translation-engine' ); ?></p>
+							</td>
+						</tr>
+						<tr id="aws_access_key_row" style="display:none;">
+							<th scope="row">
+								<label for="aws_access_key_id"><?php echo esc_html__( 'AWS Access Key ID', 'wp-smart-translation-engine' ); ?> <span class="required">*</span></label>
+							</th>
+							<td>
+								<input type="text" name="aws_access_key_id" id="aws_access_key_id" class="regular-text">
+								<p class="description"><?php echo esc_html__( 'Your AWS IAM access key ID (e.g., AKIAIOSFODNN7EXAMPLE).', 'wp-smart-translation-engine' ); ?></p>
+							</td>
+						</tr>
+						<tr id="aws_secret_key_row" style="display:none;">
+							<th scope="row">
+								<label for="aws_secret_access_key"><?php echo esc_html__( 'AWS Secret Access Key', 'wp-smart-translation-engine' ); ?> <span class="required">*</span></label>
+							</th>
+							<td>
+								<input type="password" name="aws_secret_access_key" id="aws_secret_access_key" class="regular-text">
+								<p class="description"><?php echo esc_html__( 'Your AWS IAM secret access key (will be encrypted).', 'wp-smart-translation-engine' ); ?></p>
+							</td>
+						</tr>
+						<tr id="aws_region_row" style="display:none;">
+							<th scope="row">
+								<label for="aws_region"><?php echo esc_html__( 'AWS Region', 'wp-smart-translation-engine' ); ?> <span class="required">*</span></label>
+							</th>
+							<td>
+								<select name="aws_region" id="aws_region">
+									<option value="us-east-1" selected>US East (N. Virginia) - us-east-1</option>
+									<option value="us-east-2">US East (Ohio) - us-east-2</option>
+									<option value="us-west-1">US West (N. California) - us-west-1</option>
+									<option value="us-west-2">US West (Oregon) - us-west-2</option>
+									<option value="eu-west-1">Europe (Ireland) - eu-west-1</option>
+									<option value="eu-west-2">Europe (London) - eu-west-2</option>
+									<option value="eu-west-3">Europe (Paris) - eu-west-3</option>
+									<option value="eu-central-1">Europe (Frankfurt) - eu-central-1</option>
+									<option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1</option>
+									<option value="ap-northeast-2">Asia Pacific (Seoul) - ap-northeast-2</option>
+									<option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1</option>
+									<option value="ap-southeast-2">Asia Pacific (Sydney) - ap-southeast-2</option>
+									<option value="ca-central-1">Canada (Central) - ca-central-1</option>
+								</select>
+								<p class="description"><?php echo esc_html__( 'Select the AWS region for Translate API requests.', 'wp-smart-translation-engine' ); ?></p>
 							</td>
 						</tr>
 						<tr>
@@ -292,7 +361,7 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 									<tr>
 										<th><?php echo esc_html__( 'Label', 'wp-smart-translation-engine' ); ?></th>
 										<th><?php echo esc_html__( 'API Key', 'wp-smart-translation-engine' ); ?></th>
-										<?php if ( $provider === 'azure' ) : ?>
+										<?php if ( $provider === 'azure' || $provider === 'aws' ) : ?>
 											<th><?php echo esc_html__( 'Region', 'wp-smart-translation-engine' ); ?></th>
 										<?php endif; ?>
 										<th><?php echo esc_html__( 'Usage', 'wp-smart-translation-engine' ); ?></th>
@@ -311,17 +380,30 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 												<code class="wpste-api-key-preview">
 													<?php
 													$decrypted = wpste_decrypt_api_key( $key->api_key );
-													if ( strlen( $decrypted ) > 12 ) {
-														echo esc_html( substr( $decrypted, 0, 8 ) . '...' . substr( $decrypted, -4 ) );
+
+													// Handle AWS (JSON format)
+													if ( $provider === 'aws' ) {
+														$credentials = json_decode( $decrypted, true );
+														if ( $credentials && isset( $credentials['access_key_id'] ) ) {
+															$access_key = $credentials['access_key_id'];
+															echo esc_html( substr( $access_key, 0, 8 ) . '...' . substr( $access_key, -4 ) );
+														} else {
+															echo esc_html__( 'Invalid format', 'wp-smart-translation-engine' );
+														}
 													} else {
-														echo esc_html( $decrypted );
+														// Handle regular API keys (DeepL, Azure)
+														if ( strlen( $decrypted ) > 12 ) {
+															echo esc_html( substr( $decrypted, 0, 8 ) . '...' . substr( $decrypted, -4 ) );
+														} else {
+															echo esc_html( $decrypted );
+														}
 													}
 													?>
 												</code>
 											</td>
-											<?php if ( $provider === 'azure' ) : ?>
+											<?php if ( $provider === 'azure' || $provider === 'aws' ) : ?>
 												<td>
-													<strong><?php echo esc_html( $key->region ?: 'eastus' ); ?></strong>
+													<strong><?php echo esc_html( $key->region ?: ( $provider === 'azure' ? 'eastus' : 'us-east-1' ) ); ?></strong>
 												</td>
 											<?php endif; ?>
 											<td>
@@ -457,18 +539,43 @@ $limit_reached = ( $max_keys !== -1 && $existing_keys_count >= $max_keys );
 
 <script>
 jQuery(document).ready(function($) {
-	// Show/hide Azure region field based on provider selection
+	// Show/hide provider-specific fields based on provider selection
 	$('#provider').on('change', function() {
-		if ($(this).val() === 'azure') {
+		var provider = $(this).val();
+
+		// Hide all provider-specific fields first
+		$('#api_key_row').hide();
+		$('#aws_access_key_row').hide();
+		$('#aws_secret_key_row').hide();
+		$('#aws_region_row').hide();
+		$('#azure_region_row').hide();
+
+		// Remove all required attributes
+		$('#api_key').prop('required', false);
+		$('#aws_access_key_id').prop('required', false);
+		$('#aws_secret_access_key').prop('required', false);
+		$('#azure_region').prop('required', false);
+
+		// Show appropriate fields based on provider
+		if (provider === 'aws') {
+			$('#aws_access_key_row').show();
+			$('#aws_secret_key_row').show();
+			$('#aws_region_row').show();
+			$('#aws_access_key_id').prop('required', true);
+			$('#aws_secret_access_key').prop('required', true);
+		} else if (provider === 'azure') {
+			$('#api_key_row').show();
 			$('#azure_region_row').show();
+			$('#api_key').prop('required', true);
 			$('#azure_region').prop('required', true);
-		} else {
-			$('#azure_region_row').hide();
-			$('#azure_region').prop('required', false);
+		} else if (provider === 'deepl' || provider) {
+			// DeepL and other providers just need API key
+			$('#api_key_row').show();
+			$('#api_key').prop('required', true);
 		}
 	});
 
-	// Trigger on page load in case Azure is pre-selected
+	// Trigger on page load in case a provider is pre-selected
 	$('#provider').trigger('change');
 });
 </script>
