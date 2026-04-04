@@ -64,10 +64,11 @@ class Taxonomy_Frontend {
 	 */
 	protected function get_current_language(): string {
 		// Check URL parameter
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only language detection from URL parameter
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only language detection from URL parameter
 		if ( isset( $_GET['lang'] ) ) {
 			return sanitize_text_field( wp_unslash( $_GET['lang'] ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Check cookie
 		if ( isset( $_COOKIE['wpste_lang'] ) ) {
@@ -75,7 +76,7 @@ class Taxonomy_Frontend {
 		}
 
 		// Check subdirectory in URL
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		if ( preg_match( '#^/([a-z]{2})/#', $uri, $matches ) ) {
 			return $matches[1];
 		}

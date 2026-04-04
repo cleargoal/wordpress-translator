@@ -179,13 +179,14 @@ class PublicFrontend {
 	 */
 	protected function get_current_language(): string {
 		// Check URL parameter FIRST (allows explicit language switching)
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only language detection from URL parameter
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only language detection from URL parameter
 		if ( isset( $_GET['lang'] ) ) {
 			$lang = sanitize_text_field( wp_unslash( $_GET['lang'] ) );
 			// Save to session for persistence
 			$_SESSION['wpste_lang'] = $lang;
 			return $lang;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Check session (persists across pages when no URL param)
 		if ( ! empty( $_SESSION['wpste_lang'] ) ) {
@@ -201,7 +202,7 @@ class PublicFrontend {
 		}
 
 		// Check subdirectory in URL
-		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 		if ( preg_match( '#^/([a-z]{2})/#', $uri, $matches ) ) {
 			$lang = $matches[1];
 			$_SESSION['wpste_lang'] = $lang;

@@ -38,6 +38,7 @@ delete_transient( 'wpste_api_keys_azure' );
 delete_transient( 'wpste_api_keys_aws' );
 
 // Delete post meta
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cleaning up plugin post meta on uninstall
 $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key LIKE '_wpste_%'" );
 
 // Remove custom capability
