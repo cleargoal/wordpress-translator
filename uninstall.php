@@ -23,6 +23,7 @@ $wpste_tables = array(
 );
 
 foreach ( $wpste_tables as $wpste_table ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Dropping custom tables on uninstall
 	$wpdb->query( "DROP TABLE IF EXISTS {$wpste_table}" );
 }
 

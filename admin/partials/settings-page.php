@@ -12,18 +12,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Handle form submission
 if ( isset( $_POST['wpste_settings_submit'] ) && check_admin_referer( 'wpste_settings', 'wpste_settings_nonce' ) ) {
 	// Handle enabled_languages (array from checkboxes)
-	$wpste_enabled_languages = isset( wp_unslash( $_POST['enabled_languages'] ) ) && is_array( wp_unslash( $_POST['enabled_languages'] ) )
-		? array_map( 'sanitize_text_field', wp_unslash( $_POST['enabled_languages'] ) )
-		: array( 'en' );
+	$wpste_enabled_languages = array( 'en' );
+	if ( isset( $_POST['enabled_languages'] ) && is_array( $_POST['enabled_languages'] ) ) {
+		$wpste_enabled_languages = array_map( 'sanitize_text_field', wp_unslash( $_POST['enabled_languages'] ) );
+	}
 
 	$wpste_settings = array(
-		'default_language'    => sanitize_text_field( wp_unslash( $_POST['default_language'] ) ?? 'en' ),
+		'default_language'    => isset( $_POST['default_language'] ) ? sanitize_text_field( wp_unslash( $_POST['default_language'] ) ) : 'en',
 		'enabled_languages'   => $wpste_enabled_languages,
-		'primary_provider'    => sanitize_text_field( wp_unslash( $_POST['primary_provider'] ) ?? 'deepl' ),
-		'fallback_providers'  => array_map( 'sanitize_text_field', wp_unslash( $_POST['fallback_providers'] ) ?? array() ),
-		'post_types'          => array_map( 'sanitize_text_field', wp_unslash( $_POST['post_types'] ) ?? array( 'post', 'page' ) ),
-		'url_structure'       => sanitize_text_field( wp_unslash( $_POST['url_structure'] ) ?? 'subdirectory' ),
-		'cache_ttl'           => absint( $_POST['cache_ttl'] ?? 300 ),
+		'primary_provider'    => isset( $_POST['primary_provider'] ) ? sanitize_text_field( wp_unslash( $_POST['primary_provider'] ) ) : 'deepl',
+		'fallback_providers'  => isset( $_POST['fallback_providers'] ) && is_array( $_POST['fallback_providers'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['fallback_providers'] ) ) : array(),
+		'post_types'          => isset( $_POST['post_types'] ) && is_array( $_POST['post_types'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['post_types'] ) ) : array( 'post', 'page' ),
+		'url_structure'       => isset( $_POST['url_structure'] ) ? sanitize_text_field( wp_unslash( $_POST['url_structure'] ) ) : 'subdirectory',
+		'cache_ttl'           => isset( $_POST['cache_ttl'] ) ? absint( $_POST['cache_ttl'] ) : 300,
 	);
 
 	update_option( 'wpste_settings', $wpste_settings );

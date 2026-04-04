@@ -183,6 +183,11 @@ register_deactivation_hook( __FILE__, 'wpste_deactivate' );
  * @return void
  */
 function wpste_set_language_session_handler(): void {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpste_set_language' ) ) {
+		wp_send_json_error( array( 'message' => 'Security check failed' ) );
+	}
+
 	if ( ! isset( $_POST['lang'] ) ) {
 		wp_send_json_error( array( 'message' => 'No language provided' ) );
 	}

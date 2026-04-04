@@ -148,6 +148,7 @@ class Admin {
 
 		// Get existing translations
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching translations from custom table for admin display
 		$translations = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT lang_code, translated_at, characters_translated, provider_used
@@ -269,7 +270,7 @@ class Admin {
 		}
 
 		$post_id = absint( $_POST['post_id'] ?? 0 );
-		$target_lang = sanitize_text_field( wp_unslash( $_POST['target_lang'] ) ?? '' );
+		$target_lang = isset( $_POST['target_lang'] ) ? sanitize_text_field( wp_unslash( $_POST['target_lang'] ) ) : '';
 
 		if ( ! $post_id || ! $target_lang ) {
 			wp_send_json_error( array( 'message' => 'Invalid parameters' ) );
@@ -318,7 +319,7 @@ class Admin {
 		}
 
 		$term_id = absint( $_POST['term_id'] ?? 0 );
-		$target_lang = sanitize_text_field( wp_unslash( $_POST['target_lang'] ) ?? '' );
+		$target_lang = isset( $_POST['target_lang'] ) ? sanitize_text_field( wp_unslash( $_POST['target_lang'] ) ) : '';
 
 		if ( ! $term_id || ! $target_lang ) {
 			wp_send_json_error( array( 'message' => 'Invalid parameters' ) );
@@ -353,7 +354,7 @@ class Admin {
 		}
 
 		$term_id = absint( $_POST['term_id'] ?? 0 );
-		$lang = sanitize_text_field( wp_unslash( $_POST['lang'] ) ?? '' );
+		$lang = isset( $_POST['lang'] ) ? sanitize_text_field( wp_unslash( $_POST['lang'] ) ) : '';
 
 		if ( ! $term_id || ! $lang ) {
 			wp_send_json_error( array( 'message' => 'Invalid parameters' ) );

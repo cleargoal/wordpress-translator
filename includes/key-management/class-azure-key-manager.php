@@ -174,6 +174,7 @@ class Azure_Key_Manager implements Key_Manager_Interface {
 	public function update_usage( int $key_id, int $characters ): bool {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Updating Azure key usage in custom table
 		$result = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$this->database->get_table_name('api_keys')}

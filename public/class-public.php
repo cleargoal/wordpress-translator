@@ -152,6 +152,7 @@ class PublicFrontend {
 
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching published translation from custom table
 		$translation = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wpste_post_translations
@@ -178,6 +179,7 @@ class PublicFrontend {
 	 */
 	protected function get_current_language(): string {
 		// Check URL parameter FIRST (allows explicit language switching)
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only language detection from URL parameter
 		if ( isset( $_GET['lang'] ) ) {
 			$lang = sanitize_text_field( wp_unslash( $_GET['lang'] ) );
 			// Save to session for persistence
@@ -199,7 +201,7 @@ class PublicFrontend {
 		}
 
 		// Check subdirectory in URL
-		$uri = wp_unslash( $_SERVER['REQUEST_URI'] ) ?? '';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 		if ( preg_match( '#^/([a-z]{2})/#', $uri, $matches ) ) {
 			$lang = $matches[1];
 			$_SESSION['wpste_lang'] = $lang;

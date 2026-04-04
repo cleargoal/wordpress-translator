@@ -159,6 +159,7 @@ class Language_Switcher {
 		}
 
 		// Check URL parameter first
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only language detection from URL parameter
 		if ( isset( $_GET['lang'] ) ) {
 			return sanitize_text_field( wp_unslash( $_GET['lang'] ) );
 		}
@@ -174,7 +175,7 @@ class Language_Switcher {
 		}
 
 		// Check subdirectory in URL
-		$uri = wp_unslash( $_SERVER['REQUEST_URI'] ) ?? '';
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 		if ( preg_match( '#^/([a-z]{2})/#', $uri, $matches ) ) {
 			return $matches[1];
 		}
@@ -210,7 +211,9 @@ class Language_Switcher {
 		$settings = get_option( 'wpste_settings', array() );
 		$url_structure = $settings['url_structure'] ?? 'parameter';
 
-		$current_url = ( is_ssl() ? 'https://' : 'http://' ) . wp_unslash( $_SERVER['HTTP_HOST'] ) . wp_unslash( $_SERVER['REQUEST_URI'] );
+		$http_host = isset( $_SERVER['HTTP_HOST'] ) ? wp_unslash( $_SERVER['HTTP_HOST'] ) : '';
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		$current_url = ( is_ssl() ? 'https://' : 'http://' ) . $http_host . $request_uri;
 
 		// Remove existing language parameter or subdirectory
 		$current_url = remove_query_arg( 'lang', $current_url );

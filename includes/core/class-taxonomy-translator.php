@@ -53,6 +53,7 @@ class Taxonomy_Translator {
 		$source_lang = $options['source_lang'] ?? 'en';
 
 		// Check if translation already exists
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Checking for existing term translation in custom table
 		$existing = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wpste_term_translations WHERE term_id = %d AND lang_code = %s",
@@ -109,6 +110,7 @@ class Taxonomy_Translator {
 		$translated_slug = sanitize_title( $translated_name );
 
 		// Store translation
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Storing term translation in custom table
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wpste_term_translations',
 			array(
@@ -154,6 +156,7 @@ class Taxonomy_Translator {
 	public function get_term_translation( int $term_id, string $lang ): ?array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching term translation from custom table
 		$translation = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wpste_term_translations WHERE term_id = %d AND lang_code = %s",
@@ -175,6 +178,7 @@ class Taxonomy_Translator {
 	public function get_all_term_translations( int $term_id ): array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching all term translations from custom table
 		$translations = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wpste_term_translations WHERE term_id = %d",
@@ -196,6 +200,7 @@ class Taxonomy_Translator {
 	public function delete_term_translation( int $term_id, string $lang ): bool {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Deleting term translation from custom table
 		$deleted = $wpdb->delete(
 			$wpdb->prefix . 'wpste_term_translations',
 			array(
@@ -221,6 +226,7 @@ class Taxonomy_Translator {
 	protected function get_translation_group( int $term_id ): ?string {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching translation group for term from custom table
 		$group = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT translation_group FROM {$wpdb->prefix}wpste_term_translations WHERE term_id = %d LIMIT 1",
@@ -248,6 +254,7 @@ class Taxonomy_Translator {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Setting translation group for original term in custom table
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'wpste_term_translations',
 			array(

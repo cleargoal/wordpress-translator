@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Get term info
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading term ID from URL for display purposes
 $wpste_term_id = isset( $_GET['tag_ID'] ) ? absint( $_GET['tag_ID'] ) : 0;
 if ( ! $wpste_term_id ) {
 	return;

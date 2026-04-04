@@ -20,6 +20,7 @@ $wpste_current_tier = $wpste_tier_manager->get_tier();
 $wpste_message = '';
 $wpste_message_type = '';
 
+// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification doesn't require sanitization
 if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['wpste_add_key_nonce'] ), 'wpste_add_key' ) ) {
 	$wpste_provider = isset( $_POST['provider'] ) ? sanitize_text_field( wp_unslash( $_POST['provider'] ) ) : '';
 	$wpste_label = isset( $_POST['label'] ) ? sanitize_text_field( wp_unslash( $_POST['label'] ) ) : '';
@@ -60,6 +61,7 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( wp_unslash( $_PO
 		$wpste_message_type = 'error';
 	} else {
 		// Check tier limit before adding
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Counting API keys for tier limit validation
 		$wpste_existing_keys_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wpste_api_keys" );
 
 		if ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >= $wpste_max_keys ) {
@@ -73,6 +75,7 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( wp_unslash( $_PO
 			// Encrypt API key before storing
 			$wpste_encrypted_key = wpste_encrypt_api_key( $wpste_api_key );
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Inserting API key into custom table
 			$wpste_result = $wpdb->insert(
 				$wpdb->prefix . 'wpste_api_keys',
 				array(
@@ -106,6 +109,7 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['k
 	$wpste_key_id = absint( $_GET['key_id'] );
 
 	// Get provider before deleting to clear cache
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reading API key data from custom table
 	$wpste_key_data = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT provider FROM {$wpdb->prefix}wpste_api_keys WHERE id = %d",
@@ -114,6 +118,7 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['k
 	);
 
 	if ( $wpste_key_data ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Deleting API key from custom table
 		$wpste_deleted = $wpdb->delete(
 			$wpdb->prefix . 'wpste_api_keys',
 			array( 'id' => $wpste_key_id ),
@@ -135,6 +140,7 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'toggle' && isset( $_GET['k
 	$wpste_key_id = absint( $_GET['key_id'] );
 
 	// Get current status and provider
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Reading API key data from custom table
 	$wpste_key_data = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT is_active, provider FROM {$wpdb->prefix}wpste_api_keys WHERE id = %d",
@@ -144,6 +150,7 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'toggle' && isset( $_GET['k
 
 	if ( $wpste_key_data ) {
 		$wpste_new_status = $wpste_key_data->is_active ? 0 : 1;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Updating API key status in custom table
 		$wpste_updated = $wpdb->update(
 			$wpdb->prefix . 'wpste_api_keys',
 			array( 'is_active' => $wpste_new_status ),
@@ -163,6 +170,7 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'toggle' && isset( $_GET['k
 }
 
 // Get all API keys grouped by provider
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching all API keys for display
 $wpste_api_keys = $wpdb->get_results(
 	"SELECT * FROM {$wpdb->prefix}wpste_api_keys ORDER BY provider, created_at DESC"
 );

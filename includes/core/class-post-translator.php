@@ -114,6 +114,7 @@ class Post_Translator {
 		$characters = strlen( $source_post->post_title ) + strlen( $source_post->post_content ) + strlen( $source_post->post_excerpt );
 
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Storing post translation in custom table
 		$result = $wpdb->insert(
 			$wpdb->prefix . 'wpste_post_translations',
 			array(
@@ -166,6 +167,7 @@ class Post_Translator {
 	protected function find_translation( int $post_id, string $target_lang ): ?int {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Checking for existing translation in custom table
 		$translation_id = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT id FROM {$wpdb->prefix}wpste_post_translations
@@ -190,6 +192,7 @@ class Post_Translator {
 	public function get_post_translation( int $post_id, string $lang ): ?array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching post translation from custom table
 		$translation = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}wpste_post_translations
@@ -219,6 +222,7 @@ class Post_Translator {
 		}
 
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Fetching translation group from postmeta for post relationships
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT pm1.post_id, pm2.meta_value as lang_code

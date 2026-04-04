@@ -101,6 +101,7 @@ class Database {
 		$where_clause = $this->build_where_clause( $where );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name and WHERE clause are safely constructed
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table name and WHERE clause are safely constructed
 		$sql = $this->wpdb->prepare(
 			"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
 			...$where_clause['values']
@@ -130,6 +131,7 @@ class Database {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name and WHERE clause are safely constructed
 		$sql = $this->wpdb->prepare(
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Table name and WHERE clause are safely constructed
 			"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
 			...$where_clause['values']
 		);

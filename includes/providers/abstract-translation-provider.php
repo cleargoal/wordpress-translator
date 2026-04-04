@@ -104,6 +104,7 @@ abstract class Abstract_Translation_Provider implements Translation_Provider_Int
 	protected function log_usage( int $api_key_id, int $characters ): void {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Updating API key usage statistics in custom table
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$this->database->get_table_name('api_keys')}

@@ -160,6 +160,7 @@ class DeepL_Key_Manager implements Key_Manager_Interface {
 
 		$table = $this->database->get_table_name( 'api_keys' );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Updating DeepL key usage in custom table
 		$result = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$table}

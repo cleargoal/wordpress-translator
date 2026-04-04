@@ -21,6 +21,7 @@ class Quota_Notifier {
 		// Clean up old quota alerts from database
 		global $wpdb;
 		$table = $wpdb->prefix . 'wpste_quota_alerts';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Cleaning up old resolved quota alerts from custom table
 		$wpdb->query( "DELETE FROM {$table} WHERE resolved = 1 AND resolved_at < DATE_SUB(NOW(), INTERVAL 30 DAY)" );
 	}
 }

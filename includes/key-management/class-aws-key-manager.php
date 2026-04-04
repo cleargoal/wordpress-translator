@@ -116,6 +116,7 @@ class AWS_Key_Manager implements Key_Manager_Interface {
 	}
 
 	public function update_usage( int $key_id, int $characters ): bool {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Updating AWS key usage in custom table
 		return (bool) $this->database->query(
 			$this->database->wpdb->prepare(
 				"UPDATE {$this->database->get_table_name('api_keys')}
