@@ -63,8 +63,8 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( wp_unslash( $_PO
 		$wpste_existing_keys_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wpste_api_keys" );
 
 		if ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >= $wpste_max_keys ) {
-			/* translators: %d: Maximum number of API keys allowed */
 			$wpste_message = sprintf(
+				/* translators: %d: Maximum number of API keys allowed */
 				__( 'Free tier is limited to %d API key. Please upgrade to add more keys for multi-key rotation.', 'smart-translation-engine' ),
 				$wpste_max_keys
 			);
@@ -212,8 +212,8 @@ $wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >=
 					<p>
 						<strong><?php echo esc_html__( 'Free Tier Limit Reached', 'smart-translation-engine' ); ?></strong><br>
 						<?php
-						/* translators: %d: Maximum number of API keys allowed */
 						printf(
+							/* translators: %d: Maximum number of API keys allowed */
 							esc_html__( 'Free tier is limited to %d API key. Upgrade to a paid plan to add multiple keys for smart quota rotation.', 'smart-translation-engine' ),
 							(int) $wpste_max_keys
 						);
@@ -412,8 +412,8 @@ $wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >=
 											<td>
 												<?php
 												$wpste_usage = number_format( $wpste_key->characters_used );
-												/* translators: %s: Number of characters used */
 												printf(
+													/* translators: %s: Number of characters used */
 													esc_html__( '%s chars', 'smart-translation-engine' ),
 													esc_html( $wpste_usage )
 												);
@@ -424,8 +424,8 @@ $wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >=
 												if ( $wpste_key->quota_limit ) {
 													$wpste_limit = number_format( $wpste_key->quota_limit );
 													$wpste_percentage = ( $wpste_key->characters_used / $wpste_key->quota_limit ) * 100;
-													/* translators: %1$s: Quota limit in characters, %2$d: Percentage used */
 													printf(
+														/* translators: %1$s: Quota limit in characters, %2$d: Percentage used */
 														esc_html__( '%1$s chars (%2$d%%)', 'smart-translation-engine' ),
 														esc_html( $wpste_limit ),
 														(int) round( $wpste_percentage )

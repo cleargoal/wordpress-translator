@@ -100,15 +100,14 @@ class Database {
 	public function get_row( string $table, array $where, string $output = OBJECT ) {
 		$where_clause = $this->build_where_clause( $where );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		return $this->wpdb->get_row(
-			$this->wpdb->prepare(
-				"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
-				...$where_clause['values']
-			),
-			$output
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name and WHERE clause are safely constructed
+		$sql = $this->wpdb->prepare(
+			"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
+			...$where_clause['values']
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is prepared above
+		return $this->wpdb->get_row( $sql, $output );
 	}
 
 	/**
@@ -121,24 +120,22 @@ class Database {
 	 */
 	public function get_results( string $table, array $where = array(), string $output = OBJECT ): array {
 		if ( empty( $where ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name cannot be prepared
-			return $this->wpdb->get_results(
-				"SELECT * FROM {$this->get_table_name($table)}",
-				$output
-			);
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name cannot be prepared
+			$sql = "SELECT * FROM {$this->get_table_name($table)}";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- No user input in query
+			return $this->wpdb->get_results( $sql, $output );
 		}
 
 		$where_clause = $this->build_where_clause( $where );
 
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-		return $this->wpdb->get_results(
-			$this->wpdb->prepare(
-				"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
-				...$where_clause['values']
-			),
-			$output
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name and WHERE clause are safely constructed
+		$sql = $this->wpdb->prepare(
+			"SELECT * FROM {$this->get_table_name($table)} WHERE {$where_clause['sql']}",
+			...$where_clause['values']
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL is prepared above
+		return $this->wpdb->get_results( $sql, $output );
 	}
 
 	/**
