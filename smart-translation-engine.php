@@ -219,6 +219,140 @@ function wpste_set_language_session_handler(): void {
 }
 
 /**
+ * Validates a license key with the license server and saves it locally on success.
+ *
+ * @param string $license_key The license key to validate.
+ * @return array{success: bool, tier?: string, message?: string}
+ */
+function wpste_validate_and_save_license( string $license_key ): array {
+	$uuid = get_option( 'wpste_site_uuid' );
+	if ( ! $uuid ) {
+		return array( 'success' => false, 'message' => 'Site not registered. Please try purchasing again.' );
+	}
+
+	$license_server_url = defined( 'WPSTE_LICENSE_SERVER_URL' )
+		? WPSTE_LICENSE_SERVER_URL
+		: 'https://license.yoursite.com';
+
+	$response = wp_remote_post(
+		$license_server_url . '/api/v1/license/validate',
+		array(
+			'headers' => array(
+				'Content-Type' => 'application/json',
+				'Accept'       => 'application/json',
+			),
+			'body'    => wp_json_encode(
+				array(
+					'license_key' => $license_key,
+					'uuid'        => $uuid,
+					'site_url'    => get_site_url(),
+				)
+			),
+			'timeout' => 15,
+		)
+	);
+
+	if ( is_wp_error( $response ) ) {
+		return array( 'success' => false, 'message' => 'Failed to reach license server: ' . $response->get_error_message() );
+	}
+
+	$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+	if ( ! $data || empty( $data['valid'] ) ) {
+		$msg = isset( $data['message'] ) ? $data['message'] : 'Invalid license key.';
+		return array( 'success' => false, 'message' => $msg );
+	}
+
+	$tier = isset( $data['tier'] ) ? sanitize_text_field( $data['tier'] ) : 'free';
+
+	update_option(
+		'wpste_license',
+		array(
+			'key'          => $license_key,
+			'tier'         => $tier,
+			'status'       => 'active',
+			'expires_at'   => isset( $data['expires_at'] ) ? sanitize_text_field( $data['expires_at'] ) : null,
+			'activated_at' => current_time( 'mysql' ),
+		)
+	);
+
+	return array( 'success' => true, 'tier' => $tier );
+}
+
+/**
+ * Detects a license key returned via redirect after checkout and activates it automatically.
+ * Hooked into admin_init.
+ */
+function wpste_maybe_activate_license_from_redirect(): void {
+	if ( ! is_admin() ) {
+		return;
+	}
+
+	// Only act when the API redirected back with these params.
+	if ( ! isset( $_GET['wpste_status'], $_GET['license_key'] ) ) {
+		return;
+	}
+
+	if ( 'activated' !== $_GET['wpste_status'] ) {
+		return;
+	}
+
+	// Ensure the current user can manage options.
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$license_key = sanitize_text_field( wp_unslash( $_GET['license_key'] ) );
+	$result      = wpste_validate_and_save_license( $license_key );
+
+	$redirect_args = array( 'page' => 'smart-translation-engine' );
+
+	if ( $result['success'] ) {
+		$redirect_args['wpste_notice'] = 'license_activated';
+		$redirect_args['wpste_tier']   = $result['tier'];
+	} else {
+		$redirect_args['wpste_notice'] = 'license_error';
+		$redirect_args['wpste_error']  = rawurlencode( $result['message'] );
+	}
+
+	wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
+	exit;
+}
+add_action( 'admin_init', 'wpste_maybe_activate_license_from_redirect' );
+
+/**
+ * Displays admin notices for license activation results.
+ * Hooked into admin_notices.
+ */
+function wpste_license_admin_notices(): void {
+	if ( ! isset( $_GET['wpste_notice'] ) ) {
+		return;
+	}
+
+	$notice = sanitize_key( $_GET['wpste_notice'] );
+
+	if ( 'license_activated' === $notice ) {
+		$tier = isset( $_GET['wpste_tier'] ) ? ucfirst( sanitize_text_field( wp_unslash( $_GET['wpste_tier'] ) ) ) : '';
+		printf(
+			'<div class="notice notice-success is-dismissible"><p><strong>%s</strong> %s</p></div>',
+			esc_html__( 'License activated!', 'smart-translation-engine' ),
+			/* translators: %s: tier name, e.g. "Pro" */
+			esc_html( sprintf( __( 'Your plan has been upgraded to %s.', 'smart-translation-engine' ), $tier ) )
+		);
+	}
+
+	if ( 'license_error' === $notice ) {
+		$error = isset( $_GET['wpste_error'] ) ? rawurldecode( sanitize_text_field( wp_unslash( $_GET['wpste_error'] ) ) ) : __( 'Unknown error.', 'smart-translation-engine' );
+		printf(
+			'<div class="notice notice-error is-dismissible"><p><strong>%s</strong> %s</p></div>',
+			esc_html__( 'License activation failed:', 'smart-translation-engine' ),
+			esc_html( $error )
+		);
+	}
+}
+add_action( 'admin_notices', 'wpste_license_admin_notices' );
+
+/**
  * AJAX handler for starting checkout process.
  * Generates/retrieves UUID and builds checkout URL.
  */
@@ -267,16 +401,23 @@ function wpste_start_checkout_handler(): void {
 
 	// Step 1: POST site data to get a checkout token (secure)
 	$registration_response = wp_remote_post(
-		$license_server_url . '/api/checkout/register',
+		$license_server_url . '/api/v1/checkout/register',
 		array(
-			'body'    => array(
-				'uuid'        => $uuid,
-				'site_url'    => $site_url,
-				'admin_email' => $admin_email,
-				'site_name'   => $site_name,
-				'tier'        => $tier,
-				'period'      => $period,
-				'price'       => $price,
+			'headers' => array(
+				'Content-Type' => 'application/json',
+				'Accept'       => 'application/json',
+			),
+			'body'    => wp_json_encode(
+				array(
+					'uuid'        => $uuid,
+					'site_url'    => $site_url,
+					'admin_email' => $admin_email,
+					'site_name'   => $site_name,
+					'tier'        => $tier,
+					'period'      => $period,
+					'price'       => $price,
+					'return_url'  => admin_url( 'admin.php?page=smart-translation-engine' ),
+				)
 			),
 			'timeout' => 15,
 		)
@@ -292,11 +433,15 @@ function wpste_start_checkout_handler(): void {
 	$reg_data = json_decode( $reg_body, true );
 
 	if ( ! $reg_data || ! isset( $reg_data['token'] ) ) {
-		$error_detail = 'License server response: ' . substr( $reg_body, 0, 500 );
-		error_log( 'WPSTE Checkout Error: Invalid response from license server. ' . $error_detail );
+		$http_code    = wp_remote_retrieve_response_code( $registration_response );
+		$error_detail = sprintf(
+			'HTTP %s | Body: %s',
+			$http_code,
+			substr( $reg_body, 0, 500 )
+		);
+		error_log( 'WPSTE Checkout Error: ' . $error_detail );
 		wp_send_json_error( array(
-			'message' => 'License server error. Check if API is running on ' . $license_server_url,
-			'debug' => WP_DEBUG ? $error_detail : null
+			'message' => 'License server error: ' . $error_detail,
 		) );
 	}
 
@@ -319,74 +464,29 @@ function wpste_start_checkout_handler(): void {
 }
 
 /**
- * AJAX handler for activating license after purchase.
- * Called after successful payment with license key from server.
+ * AJAX handler for manually activating a license key.
+ * Used as a fallback if the automatic redirect activation fails.
  */
 function wpste_activate_license_handler(): void {
-	// Verify nonce
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpste_activate_license' ) ) {
-		wp_send_json_error( array( 'message' => 'Security check failed' ) );
+		wp_send_json_error( array( 'message' => 'Security check failed.' ) );
 	}
 
-	// Validate required parameters
 	if ( ! isset( $_POST['license_key'] ) ) {
-		wp_send_json_error( array( 'message' => 'License key required' ) );
+		wp_send_json_error( array( 'message' => 'License key required.' ) );
 	}
 
 	$license_key = sanitize_text_field( wp_unslash( $_POST['license_key'] ) );
+	$result      = wpste_validate_and_save_license( $license_key );
 
-	// Get UUID
-	$uuid = get_option( 'wpste_site_uuid' );
-	if ( ! $uuid ) {
-		wp_send_json_error( array( 'message' => 'Site not registered' ) );
+	if ( ! $result['success'] ) {
+		wp_send_json_error( array( 'message' => $result['message'] ) );
 	}
-
-	// Validate license with server
-	$license_api_url = defined( 'WPSTE_LICENSE_SERVER_URL' )
-		? WPSTE_LICENSE_SERVER_URL . '/api/license/validate'
-		: 'https://license.yoursite.com/api/license/validate'; // Production default
-
-	$response = wp_remote_post(
-		$license_api_url,
-		array(
-			'body'    => array(
-				'license_key' => $license_key,
-				'uuid'        => $uuid,
-				'site_url'    => get_site_url(),
-			),
-			'timeout' => 15,
-		)
-	);
-
-	if ( is_wp_error( $response ) ) {
-		wp_send_json_error( array( 'message' => 'Failed to validate license: ' . $response->get_error_message() ) );
-	}
-
-	$body = wp_remote_retrieve_body( $response );
-	$data = json_decode( $body, true );
-
-	if ( ! $data || ! isset( $data['valid'] ) || ! $data['valid'] ) {
-		wp_send_json_error( array( 'message' => 'Invalid license key' ) );
-	}
-
-	// Save license data
-	$license_data = array(
-		'key'        => $license_key,
-		'tier'       => $data['tier'] ?? 'free',
-		'status'     => 'active',
-		'expires_at' => $data['expires_at'] ?? null,
-		'activated_at' => current_time( 'mysql' ),
-	);
-
-	update_option( 'wpste_license', $license_data );
-
-	// Download premium features if available
-	// TODO: Implement feature download from license server
 
 	wp_send_json_success(
 		array(
-			'tier'    => $license_data['tier'],
-			'message' => 'License activated successfully',
+			'tier'    => $result['tier'],
+			'message' => 'License activated successfully.',
 		)
 	);
 }

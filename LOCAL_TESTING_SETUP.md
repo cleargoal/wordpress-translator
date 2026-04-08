@@ -5,11 +5,16 @@
 Add to your test site's `wp-config.php`:
 
 ```php
-// Near the top, after ABSPATH check
-define( 'WPSTE_LICENSE_SERVER_URL', 'http://localhost:8016' );
+define( 'WPSTE_LICENSE_SERVER_URL', 'http://192.168.0.110:8016' );
 ```
 
 **Location**: `/home/yefrem/Local Sites/translation-test/app/public/wp-config.php`
+
+> **Why not `localhost`?** Local by Flywheel runs WordPress inside a container/VM.
+> A `wp_remote_post()` to `localhost:8016` resolves to the *container's* localhost,
+> not your host machine. Use your LAN IP (`192.168.0.110`) instead.
+> If your IP changes (router DHCP), update this value.
+> On some setups `http://host.docker.internal:8016` also works as a stable alternative.
 
 ## How It Works
 
