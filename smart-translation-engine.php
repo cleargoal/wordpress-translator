@@ -219,6 +219,179 @@ function wpste_set_language_session_handler(): void {
 }
 
 /**
+ * AJAX handler for starting checkout process.
+ * Generates/retrieves UUID and builds checkout URL.
+ */
+function wpste_start_checkout_handler(): void {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpste_start_checkout' ) ) {
+		wp_send_json_error( array( 'message' => 'Security check failed' ) );
+	}
+
+	// Validate required parameters
+	if ( ! isset( $_POST['tier'] ) || ! isset( $_POST['period'] ) || ! isset( $_POST['price'] ) ) {
+		wp_send_json_error( array( 'message' => 'Missing required parameters' ) );
+	}
+
+	$tier = sanitize_text_field( wp_unslash( $_POST['tier'] ) );
+	$period = sanitize_text_field( wp_unslash( $_POST['period'] ) );
+	$price = absint( $_POST['price'] );
+
+	// Validate tier
+	$valid_tiers = array( 'starter', 'basic', 'plus', 'pro', 'agency', 'enterprise' );
+	if ( ! in_array( $tier, $valid_tiers, true ) ) {
+		wp_send_json_error( array( 'message' => 'Invalid tier' ) );
+	}
+
+	// Validate period
+	if ( ! in_array( $period, array( 'monthly', 'yearly' ), true ) ) {
+		wp_send_json_error( array( 'message' => 'Invalid billing period' ) );
+	}
+
+	// Generate or retrieve UUID for this site
+	$uuid = get_option( 'wpste_site_uuid' );
+	if ( ! $uuid ) {
+		$uuid = wp_generate_uuid4();
+		update_option( 'wpste_site_uuid', $uuid );
+	}
+
+	// Get site information
+	$site_url = get_site_url();
+	$admin_email = get_option( 'admin_email' );
+	$site_name = get_bloginfo( 'name' );
+
+	// Register site with license server first (more secure than GET params)
+	$license_server_url = defined( 'WPSTE_LICENSE_SERVER_URL' )
+		? WPSTE_LICENSE_SERVER_URL
+		: 'https://license.yoursite.com'; // Production default
+
+	// Step 1: POST site data to get a checkout token (secure)
+	$registration_response = wp_remote_post(
+		$license_server_url . '/api/checkout/register',
+		array(
+			'body'    => array(
+				'uuid'        => $uuid,
+				'site_url'    => $site_url,
+				'admin_email' => $admin_email,
+				'site_name'   => $site_name,
+				'tier'        => $tier,
+				'period'      => $period,
+				'price'       => $price,
+			),
+			'timeout' => 15,
+		)
+	);
+
+	if ( is_wp_error( $registration_response ) ) {
+		$error_msg = 'Failed to connect to license server: ' . $registration_response->get_error_message();
+		error_log( 'WPSTE Checkout Error: ' . $error_msg );
+		wp_send_json_error( array( 'message' => $error_msg ) );
+	}
+
+	$reg_body = wp_remote_retrieve_body( $registration_response );
+	$reg_data = json_decode( $reg_body, true );
+
+	if ( ! $reg_data || ! isset( $reg_data['token'] ) ) {
+		$error_detail = 'License server response: ' . substr( $reg_body, 0, 500 );
+		error_log( 'WPSTE Checkout Error: Invalid response from license server. ' . $error_detail );
+		wp_send_json_error( array(
+			'message' => 'License server error. Check if API is running on ' . $license_server_url,
+			'debug' => WP_DEBUG ? $error_detail : null
+		) );
+	}
+
+	// Step 2: Build checkout URL with just the token (secure)
+	$checkout_url = add_query_arg(
+		array(
+			'token' => $reg_data['token'], // Short-lived token (not PII)
+		),
+		$license_server_url . '/checkout'
+	);
+
+	// Return UUID and checkout URL
+	wp_send_json_success(
+		array(
+			'uuid'         => $uuid,
+			'checkout_url' => $checkout_url,
+			'message'      => 'Checkout initialized',
+		)
+	);
+}
+
+/**
+ * AJAX handler for activating license after purchase.
+ * Called after successful payment with license key from server.
+ */
+function wpste_activate_license_handler(): void {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpste_activate_license' ) ) {
+		wp_send_json_error( array( 'message' => 'Security check failed' ) );
+	}
+
+	// Validate required parameters
+	if ( ! isset( $_POST['license_key'] ) ) {
+		wp_send_json_error( array( 'message' => 'License key required' ) );
+	}
+
+	$license_key = sanitize_text_field( wp_unslash( $_POST['license_key'] ) );
+
+	// Get UUID
+	$uuid = get_option( 'wpste_site_uuid' );
+	if ( ! $uuid ) {
+		wp_send_json_error( array( 'message' => 'Site not registered' ) );
+	}
+
+	// Validate license with server
+	$license_api_url = defined( 'WPSTE_LICENSE_SERVER_URL' )
+		? WPSTE_LICENSE_SERVER_URL . '/api/license/validate'
+		: 'https://license.yoursite.com/api/license/validate'; // Production default
+
+	$response = wp_remote_post(
+		$license_api_url,
+		array(
+			'body'    => array(
+				'license_key' => $license_key,
+				'uuid'        => $uuid,
+				'site_url'    => get_site_url(),
+			),
+			'timeout' => 15,
+		)
+	);
+
+	if ( is_wp_error( $response ) ) {
+		wp_send_json_error( array( 'message' => 'Failed to validate license: ' . $response->get_error_message() ) );
+	}
+
+	$body = wp_remote_retrieve_body( $response );
+	$data = json_decode( $body, true );
+
+	if ( ! $data || ! isset( $data['valid'] ) || ! $data['valid'] ) {
+		wp_send_json_error( array( 'message' => 'Invalid license key' ) );
+	}
+
+	// Save license data
+	$license_data = array(
+		'key'        => $license_key,
+		'tier'       => $data['tier'] ?? 'free',
+		'status'     => 'active',
+		'expires_at' => $data['expires_at'] ?? null,
+		'activated_at' => current_time( 'mysql' ),
+	);
+
+	update_option( 'wpste_license', $license_data );
+
+	// Download premium features if available
+	// TODO: Implement feature download from license server
+
+	wp_send_json_success(
+		array(
+			'tier'    => $license_data['tier'],
+			'message' => 'License activated successfully',
+		)
+	);
+}
+
+/**
  * Begin execution of the plugin.
  *
  * Load dependencies and initialize the plugin.
@@ -301,6 +474,10 @@ function wpste_run(): void {
 	// AJAX handler for setting language session
 	add_action( 'wp_ajax_wpste_set_language', 'wpste_set_language_session_handler' );
 	add_action( 'wp_ajax_nopriv_wpste_set_language', 'wpste_set_language_session_handler' );
+
+	// AJAX handlers for licensing
+	add_action( 'wp_ajax_wpste_start_checkout', 'wpste_start_checkout_handler' );
+	add_action( 'wp_ajax_wpste_activate_license', 'wpste_activate_license_handler' );
 
 	// Register language switcher widget
 	require_once WPSTE_PLUGIN_DIR . 'public/class-language-switcher-widget.php';
