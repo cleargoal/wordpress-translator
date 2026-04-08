@@ -256,10 +256,15 @@ function wpste_validate_and_save_license( string $license_key ): array {
 		return array( 'success' => false, 'message' => 'Failed to reach license server: ' . $response->get_error_message() );
 	}
 
-	$data = json_decode( wp_remote_retrieve_body( $response ), true );
+	$http_code   = wp_remote_retrieve_response_code( $response );
+	$raw_body    = wp_remote_retrieve_body( $response );
+	$data        = json_decode( $raw_body, true );
 
 	if ( ! $data || empty( $data['valid'] ) ) {
-		$msg = isset( $data['message'] ) ? $data['message'] : 'Invalid license key.';
+		$msg = isset( $data['message'] )
+			? $data['message']
+			: sprintf( 'Validate endpoint HTTP %s: %s', $http_code, substr( $raw_body, 0, 300 ) );
+		error_log( 'WPSTE License Validate Error: HTTP ' . $http_code . ' | ' . $raw_body );
 		return array( 'success' => false, 'message' => $msg );
 	}
 
@@ -280,45 +285,92 @@ function wpste_validate_and_save_license( string $license_key ): array {
 }
 
 /**
- * Detects a license key returned via redirect after checkout and activates it automatically.
- * Hooked into admin_init.
+ * Registers the REST API endpoint that the license server redirects to after payment.
+ * Using REST API avoids server-level restrictions on direct wp-admin access from external domains.
  */
-function wpste_maybe_activate_license_from_redirect(): void {
-	if ( ! is_admin() ) {
-		return;
+function wpste_register_license_callback_endpoint(): void {
+	register_rest_route(
+		'wpste/v1',
+		'/license/activate-callback',
+		array(
+			'methods'             => 'GET',
+			'callback'            => 'wpste_license_activate_callback',
+			'permission_callback' => '__return_true',
+			'args'                => array(
+				'license_key'  => array(
+					'required'          => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'wpste_status' => array(
+					'required'          => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
+		)
+	);
+}
+add_action( 'rest_api_init', 'wpste_register_license_callback_endpoint' );
+
+/**
+ * Handles the browser redirect from the license server after a successful payment.
+ * Validates and saves the license, then redirects to wp-admin with a notice.
+ *
+ * @param WP_REST_Request $request The REST request object.
+ */
+function wpste_license_activate_callback( WP_REST_Request $request ): WP_REST_Response {
+	$admin_page = admin_url( 'admin.php?page=wpste-upgrade' );
+
+	if ( 'activated' !== $request->get_param( 'wpste_status' ) ) {
+		return new WP_REST_Response(
+			array(
+				'success'   => false,
+				'message'   => 'Invalid callback status.',
+				'admin_url' => add_query_arg(
+					array(
+						'wpste_notice' => 'license_error',
+						'wpste_error'  => rawurlencode( 'Invalid callback status.' ),
+					),
+					$admin_page
+				),
+			),
+			400
+		);
 	}
 
-	// Only act when the API redirected back with these params.
-	if ( ! isset( $_GET['wpste_status'], $_GET['license_key'] ) ) {
-		return;
-	}
-
-	if ( 'activated' !== $_GET['wpste_status'] ) {
-		return;
-	}
-
-	// Ensure the current user can manage options.
-	if ( ! current_user_can( 'manage_options' ) ) {
-		return;
-	}
-
-	$license_key = sanitize_text_field( wp_unslash( $_GET['license_key'] ) );
-	$result      = wpste_validate_and_save_license( $license_key );
-
-	$redirect_args = array( 'page' => 'smart-translation-engine' );
+	$result = wpste_validate_and_save_license( $request->get_param( 'license_key' ) );
 
 	if ( $result['success'] ) {
-		$redirect_args['wpste_notice'] = 'license_activated';
-		$redirect_args['wpste_tier']   = $result['tier'];
-	} else {
-		$redirect_args['wpste_notice'] = 'license_error';
-		$redirect_args['wpste_error']  = rawurlencode( $result['message'] );
+		return new WP_REST_Response(
+			array(
+				'success'   => true,
+				'tier'      => $result['tier'],
+				'admin_url' => add_query_arg(
+					array(
+						'wpste_notice' => 'license_activated',
+						'wpste_tier'   => $result['tier'],
+					),
+					$admin_page
+				),
+			),
+			200
+		);
 	}
 
-	wp_safe_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
-	exit;
+	return new WP_REST_Response(
+		array(
+			'success'   => false,
+			'message'   => $result['message'],
+			'admin_url' => add_query_arg(
+				array(
+					'wpste_notice' => 'license_error',
+					'wpste_error'  => rawurlencode( $result['message'] ),
+				),
+				$admin_page
+			),
+		),
+		422
+	);
 }
-add_action( 'admin_init', 'wpste_maybe_activate_license_from_redirect' );
 
 /**
  * Displays admin notices for license activation results.
@@ -416,7 +468,7 @@ function wpste_start_checkout_handler(): void {
 					'tier'        => $tier,
 					'period'      => $period,
 					'price'       => $price,
-					'return_url'  => admin_url( 'admin.php?page=smart-translation-engine' ),
+					'return_url'  => rest_url( 'wpste/v1/license/activate-callback' ),
 				)
 			),
 			'timeout' => 15,
