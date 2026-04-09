@@ -54,6 +54,16 @@ class Translation_Manager {
 			return array( 'error' => 'Empty text provided' );
 		}
 
+		// Allow premium features (e.g. Translation Memory) to short-circuit the API call.
+		$override = apply_filters( 'wpste_before_translate', null, $text, $source_lang, $target_lang );
+		if ( is_array( $override ) && isset( $override['text'] ) ) {
+			return $override;
+		}
+
+		// Allow premium features (e.g. Glossary) to pre-process the source text.
+		$original_text = $text;
+		$text          = apply_filters( 'wpste_translate_source', $text, $source_lang, $target_lang );
+
 		// Get provider list (primary + fallbacks)
 		$providers = $this->get_provider_list();
 
@@ -70,7 +80,8 @@ class Translation_Manager {
 			$result = $provider->translate( $text, $source_lang, $target_lang, $options );
 
 			if ( ! isset( $result['error'] ) ) {
-				// Success
+				// Allow premium features (e.g. Glossary) to post-process the translated text.
+				$result['text'] = apply_filters( 'wpste_translate_result', $result['text'], $original_text, $source_lang, $target_lang );
 				$result['provider'] = $provider_name;
 				return $result;
 			}
