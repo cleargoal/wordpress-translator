@@ -23,11 +23,18 @@ class Tier_Manager {
 	}
 
 	public function get_language_limit() {
+		$limits = array(
+			'free'       => 3,
+			'starter'    => 4,
+			'basic'      => 5,
+			'plus'       => 8,
+			'pro'        => 12,
+			'agency'     => -1,
+			'enterprise' => -1,
+		);
+
 		$tier = $this->get_tier();
-		if ( $tier === 'free' ) {
-			return 3;
-		}
-		return -1; // unlimited
+		return $limits[ $tier ] ?? -1;
 	}
 
 	/**
@@ -36,13 +43,17 @@ class Tier_Manager {
 	 * @return int Maximum keys allowed (-1 for unlimited)
 	 */
 	public function get_max_api_keys() {
+		$limits = array(
+			'free'       => 1,
+			'starter'    => 2,
+			'basic'      => 3,
+			'plus'       => 5,
+			'pro'        => -1,
+			'agency'     => -1,
+			'enterprise' => -1,
+		);
+
 		$tier = $this->get_tier();
-
-		if ( $tier === 'free' ) {
-			return 1; // Free tier: only 1 API key total
-		}
-
-		// Paid tiers: unlimited keys (for rotation)
-		return -1;
+		return $limits[ $tier ] ?? -1;
 	}
 }

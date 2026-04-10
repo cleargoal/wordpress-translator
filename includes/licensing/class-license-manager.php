@@ -100,6 +100,9 @@ class License_Manager {
 			// Check for feature updates while we have a valid server response.
 			$this->check_feature_updates( $result['features'] ?? array() );
 
+			// Check if expiry reminder should fire.
+			$this->maybe_set_expiry_reminder( $result['expires_at'] ?? '' );
+
 			return;
 		}
 
@@ -192,6 +195,26 @@ class License_Manager {
 		}
 
 		rmdir( $dir );
+	}
+
+	/**
+	 * Set a transient to show an admin notice if expiry is within 14 days
+	 * and the user has enabled the reminder.
+	 *
+	 * @param string $expires_at ISO date string from the server.
+	 */
+	private function maybe_set_expiry_reminder( string $expires_at ): void {
+		if ( ! $expires_at || ! get_option( 'wpste_remind_before_expiry', false ) ) {
+			return;
+		}
+
+		$days_left = ( strtotime( $expires_at ) - time() ) / DAY_IN_SECONDS;
+
+		if ( $days_left <= 14 && $days_left > 0 ) {
+			set_transient( 'wpste_expiry_reminder', (int) ceil( $days_left ), DAY_IN_SECONDS );
+		} else {
+			delete_transient( 'wpste_expiry_reminder' );
+		}
 	}
 
 	/**

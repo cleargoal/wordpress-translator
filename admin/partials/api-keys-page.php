@@ -66,8 +66,9 @@ if ( isset( $_POST['wpste_add_key_nonce'] ) && wp_verify_nonce( wp_unslash( $_PO
 
 		if ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >= $wpste_max_keys ) {
 			$wpste_message = sprintf(
-				/* translators: %d: Maximum number of API keys allowed */
-				__( 'Free tier is limited to %d API key. Please upgrade to add more keys for multi-key rotation.', 'smart-translation-engine' ),
+				/* translators: 1: current tier name, 2: maximum number of API keys allowed */
+				__( 'The %1$s plan allows a maximum of %2$d API key(s). Please upgrade to add more keys for multi-key rotation.', 'smart-translation-engine' ),
+				ucfirst( $wpste_current_tier ),
 				$wpste_max_keys
 			);
 			$wpste_message_type = 'error';
@@ -194,9 +195,10 @@ $wpste_provider_names = array(
 	'aws' => 'AWS Translate',
 );
 
-// Check if limit reached
+// Check if limit reached or exceeded
 $wpste_existing_keys_count = count( $wpste_api_keys );
-$wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >= $wpste_max_keys );
+$wpste_limit_reached  = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >= $wpste_max_keys );
+$wpste_limit_exceeded = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count > $wpste_max_keys );
 
 ?>
 
@@ -215,20 +217,35 @@ $wpste_limit_reached = ( $wpste_max_keys !== -1 && $wpste_existing_keys_count >=
 		<div class="wpste-add-key-section">
 			<h2><?php echo esc_html__( 'Add New API Key', 'smart-translation-engine' ); ?></h2>
 
-			<?php if ( $wpste_limit_reached ) : ?>
+			<?php if ( $wpste_limit_exceeded ) : ?>
 				<div class="notice notice-warning inline">
 					<p>
-						<strong><?php echo esc_html__( 'Free Tier Limit Reached', 'smart-translation-engine' ); ?></strong><br>
+						<strong><?php echo esc_html__( 'API Key Limit Exceeded', 'smart-translation-engine' ); ?></strong><br>
 						<?php
 						printf(
-							/* translators: %d: Maximum number of API keys allowed */
-							esc_html__( 'Free tier is limited to %d API key. Upgrade to a paid plan to add multiple keys for smart quota rotation.', 'smart-translation-engine' ),
+							/* translators: 1: current tier name, 2: maximum number of API keys allowed */
+							esc_html__( 'The %1$s plan allows a maximum of %2$d API key(s). Please delete the extra key(s) or upgrade your plan.', 'smart-translation-engine' ),
+							esc_html( ucfirst( $wpste_current_tier ) ),
 							(int) $wpste_max_keys
 						);
 						?>
 					</p>
 					<p>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpste-upgrade' ) ); ?>" class="button button-primary"><?php echo esc_html__( 'Upgrade Plan', 'smart-translation-engine' ); ?></a>
+					</p>
+				</div>
+			<?php elseif ( $wpste_limit_reached ) : ?>
+				<div class="notice notice-info inline">
+					<p>
+						<?php
+						printf(
+							/* translators: 1: current tier name, 2: number of API keys used, 3: maximum allowed */
+							esc_html__( 'You are using all %2$d/%3$d API key(s) available on the %1$s plan.', 'smart-translation-engine' ),
+							esc_html( ucfirst( $wpste_current_tier ) ),
+							(int) $wpste_existing_keys_count,
+							(int) $wpste_max_keys
+						);
+						?>
 					</p>
 				</div>
 			<?php else : ?>

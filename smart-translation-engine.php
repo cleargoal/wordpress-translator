@@ -548,6 +548,47 @@ function wpste_activate_license_handler(): void {
 }
 
 /**
+ * AJAX handler: force an immediate license re-validation (the "Check now" button).
+ */
+function wpste_check_license_now_handler(): void {
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpste_check_license_now' ) ) {
+		wp_send_json_error( array( 'message' => 'Invalid nonce.' ) );
+	}
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions.' ) );
+	}
+
+	$manager = new WPSTE\Licensing\License_Manager();
+	$manager->validate();
+
+	$license = get_option( 'wpste_license', array() );
+
+	if ( 'active' === ( $license['status'] ?? '' ) ) {
+		wp_send_json_success();
+	} else {
+		wp_send_json_error( array( 'message' => 'License is not active.' ) );
+	}
+}
+
+/**
+ * AJAX handler: save the "remind before expiry" user preference.
+ */
+function wpste_save_license_reminder_handler(): void {
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpste_save_license_reminder' ) ) {
+		wp_send_json_error( array( 'message' => 'Invalid nonce.' ) );
+	}
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions.' ) );
+	}
+
+	$enabled = ! empty( $_POST['enabled'] );
+	update_option( 'wpste_remind_before_expiry', $enabled );
+	wp_send_json_success();
+}
+
+/**
  * AJAX handler: manually trigger a feature download (e.g. from "Update now" button).
  */
 function wpste_download_features_handler(): void {
@@ -624,6 +665,33 @@ function wpste_run(): void {
 		}
 	);
 
+	// Expiry reminder admin notice.
+	add_action(
+		'admin_notices',
+		function () {
+			$days_left = get_transient( 'wpste_expiry_reminder' );
+			if ( ! $days_left ) {
+				return;
+			}
+			printf(
+				'<div class="notice notice-warning is-dismissible"><p><strong>%s</strong> %s</p></div>',
+				esc_html__( 'Smart Translation Engine:', 'smart-translation-engine' ),
+				esc_html(
+					sprintf(
+						/* translators: %d: number of days */
+						_n(
+							'Your license expires in %d day. Visit the Upgrade page to renew.',
+							'Your license expires in %d days. Visit the Upgrade page to renew.',
+							(int) $days_left,
+							'smart-translation-engine'
+						),
+						(int) $days_left
+					)
+				)
+			);
+		}
+	);
+
 	add_action(
 		'wpste_download_features_after_activation',
 		function () {
@@ -668,6 +736,8 @@ function wpste_run(): void {
 	add_action( 'wp_ajax_wpste_start_checkout', 'wpste_start_checkout_handler' );
 	add_action( 'wp_ajax_wpste_activate_license', 'wpste_activate_license_handler' );
 	add_action( 'wp_ajax_wpste_download_features', 'wpste_download_features_handler' );
+	add_action( 'wp_ajax_wpste_check_license_now', 'wpste_check_license_now_handler' );
+	add_action( 'wp_ajax_wpste_save_license_reminder', 'wpste_save_license_reminder_handler' );
 
 	// Register language switcher widget
 	require_once WPSTE_PLUGIN_DIR . 'public/class-language-switcher-widget.php';

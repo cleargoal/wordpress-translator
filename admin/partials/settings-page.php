@@ -88,6 +88,8 @@ $wpste_show_fallback = ( $wpste_current_tier !== 'free' ); // Hide fallback prov
 				<th scope="row"><?php esc_html_e( 'Languages', 'smart-translation-engine' ); ?></th>
 				<td>
 					<?php
+					$wpste_tier_manager   = new WPSTE\Licensing\Tier_Manager();
+					$wpste_lang_limit     = $wpste_tier_manager->get_language_limit();
 					$wpste_all_languages = array(
 						'en' => 'English',
 						'uk' => 'Ukrainian',
@@ -157,14 +159,26 @@ $wpste_show_fallback = ( $wpste_current_tier !== 'free' ); // Hide fallback prov
 					</div>
 					<p class="description">
 						<span id="wpste-lang-counter">
-							<strong><?php echo count( $wpste_enabled ); ?> of 3</strong> languages selected (Free tier limit: 3)
+							<?php if ( $wpste_lang_limit === -1 ) : ?>
+								<strong><?php echo count( $wpste_enabled ); ?></strong> languages selected (unlimited)
+							<?php else : ?>
+								<strong><?php echo count( $wpste_enabled ); ?> of <?php echo (int) $wpste_lang_limit; ?></strong> languages selected
+							<?php endif; ?>
 						</span>
 					</p>
 					<p class="description">
 						<?php esc_html_e( 'Select which languages to enable, and choose one as the default (source) language.', 'smart-translation-engine' ); ?>
 					</p>
 					<p class="description wpste-error" id="wpste-lang-limit-error" style="color: #dc3232; display: none;">
-						<?php esc_html_e( 'Free tier allows maximum 3 languages. Please deselect some languages or upgrade.', 'smart-translation-engine' ); ?>
+						<?php
+						if ( $wpste_lang_limit !== -1 ) {
+							printf(
+								/* translators: %d: maximum languages allowed */
+								esc_html__( 'Your plan allows a maximum of %d languages. Please deselect some languages or upgrade.', 'smart-translation-engine' ),
+								(int) $wpste_lang_limit
+							);
+						}
+						?>
 					</p>
 				</td>
 			</tr>
@@ -257,7 +271,7 @@ if (class_exists('WPSTE\Frontend\Language_Switcher')) {
 
 <script>
 jQuery(document).ready(function($) {
-	var maxLanguages = 3; // Free tier limit
+	var maxLanguages = <?php echo (int) $wpste_lang_limit; ?>; // -1 means unlimited
 	var $checkboxes = $('.wpste-language-checkbox');
 	var $radios = $('.wpste-default-radio');
 	var $counter = $('#wpste-lang-counter');
@@ -271,9 +285,15 @@ jQuery(document).ready(function($) {
 
 	function updateLanguageSelection() {
 		var checked = $checkboxes.filter(':checked').length;
-		$counter.html('<strong>' + checked + ' of ' + maxLanguages + '</strong> languages selected (Free tier limit: ' + maxLanguages + ')');
+		var unlimited = (maxLanguages === -1);
 
-		if (checked > maxLanguages) {
+		if (unlimited) {
+			$counter.html('<strong>' + checked + '</strong> languages selected (unlimited)');
+		} else {
+			$counter.html('<strong>' + checked + ' of ' + maxLanguages + '</strong> languages selected');
+		}
+
+		if (!unlimited && checked > maxLanguages) {
 			$error.show();
 			$submitBtn.prop('disabled', true).addClass('disabled');
 			$counter.css('color', '#dc3232');
@@ -286,7 +306,7 @@ jQuery(document).ready(function($) {
 			$error.hide();
 			$submitBtn.prop('disabled', false).removeClass('disabled');
 			$counter.css('color', '#000');
-			$counter.find('strong').css('color', checked === maxLanguages ? '#d63638' : '#2271b1');
+			$counter.find('strong').css('color', (!unlimited && checked === maxLanguages) ? '#d63638' : '#2271b1');
 		}
 
 		// Update default language radio states
