@@ -273,13 +273,17 @@ function wpste_validate_and_save_license( string $license_key ): array {
 	update_option(
 		'wpste_license',
 		array(
-			'key'          => $license_key,
-			'tier'         => $tier,
-			'status'       => 'active',
-			'expires_at'   => isset( $data['expires_at'] ) ? sanitize_text_field( $data['expires_at'] ) : null,
-			'activated_at' => current_time( 'mysql' ),
+			'key'                     => $license_key,
+			'tier'                    => $tier,
+			'status'                  => 'active',
+			'expires_at'              => isset( $data['expires_at'] ) ? sanitize_text_field( $data['expires_at'] ) : null,
+			'activated_at'            => current_time( 'mysql' ),
+			'grace_period_started_at' => null,
 		)
 	);
+
+	// Schedule async feature download so it doesn't block the HTTP response.
+	wp_schedule_single_event( time() + 5, 'wpste_download_features_after_activation' );
 
 	return array( 'success' => true, 'tier' => $tier );
 }
@@ -544,6 +548,31 @@ function wpste_activate_license_handler(): void {
 }
 
 /**
+ * AJAX handler: manually trigger a feature download (e.g. from "Update now" button).
+ */
+function wpste_download_features_handler(): void {
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpste_download_features' ) ) {
+		wp_send_json_error( array( 'message' => 'Invalid nonce.' ) );
+	}
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions.' ) );
+	}
+
+	$downloader = new WPSTE\Licensing\Feature_Downloader();
+	$results    = $downloader->download_all_features();
+
+	$failed = array_filter( $results, static fn( $r ) => empty( $r['success'] ) );
+
+	if ( empty( $failed ) ) {
+		delete_transient( 'wpste_feature_updates' );
+		wp_send_json_success();
+	} else {
+		wp_send_json_error( array( 'message' => 'Some features failed to update.' ) );
+	}
+}
+
+/**
  * Begin execution of the plugin.
  *
  * Load dependencies and initialize the plugin.
@@ -595,6 +624,14 @@ function wpste_run(): void {
 		}
 	);
 
+	add_action(
+		'wpste_download_features_after_activation',
+		function () {
+			$downloader = new WPSTE\Licensing\Feature_Downloader();
+			$downloader->download_all_features();
+		}
+	);
+
 	// Initialize admin functionality if in admin
 	if ( is_admin() ) {
 		require_once WPSTE_PLUGIN_DIR . 'admin/class-admin.php';
@@ -630,6 +667,7 @@ function wpste_run(): void {
 	// AJAX handlers for licensing
 	add_action( 'wp_ajax_wpste_start_checkout', 'wpste_start_checkout_handler' );
 	add_action( 'wp_ajax_wpste_activate_license', 'wpste_activate_license_handler' );
+	add_action( 'wp_ajax_wpste_download_features', 'wpste_download_features_handler' );
 
 	// Register language switcher widget
 	require_once WPSTE_PLUGIN_DIR . 'public/class-language-switcher-widget.php';

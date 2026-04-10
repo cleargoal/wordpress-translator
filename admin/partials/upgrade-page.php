@@ -150,6 +150,117 @@ $wpste_tiers = array(
 <div class="wrap wpste-upgrade-page">
 	<h1><?php echo esc_html__( 'Upgrade Your Plan', 'smart-translation-engine' ); ?></h1>
 
+	<!-- License Management -->
+	<div class="wpste-license-box">
+		<h2><?php echo esc_html__( 'License', 'smart-translation-engine' ); ?></h2>
+
+		<?php if ( 'free' !== $wpste_current_tier ) : ?>
+			<?php
+			$wpste_key        = $wpste_license['key'] ?? '';
+			$wpste_expires    = $wpste_license['expires_at'] ?? null;
+			$wpste_status     = $wpste_license['status'] ?? 'inactive';
+			$wpste_grace      = $wpste_license['grace_period_started_at'] ?? null;
+
+			// Mask the key: show first segment + last 4 chars only.
+			$wpste_masked_key = '';
+			if ( $wpste_key ) {
+				$wpste_parts      = explode( '-', $wpste_key );
+				$wpste_last       = end( $wpste_parts );
+				$wpste_masked_key = $wpste_parts[0] . '-' . ( $wpste_parts[1] ?? '' ) . '-****-****-****-' . $wpste_last;
+			}
+			?>
+			<table class="form-table wpste-license-table">
+				<tr>
+					<th><?php echo esc_html__( 'Status', 'smart-translation-engine' ); ?></th>
+					<td>
+						<?php if ( 'active' === $wpste_status ) : ?>
+							<span class="wpste-badge wpste-badge-active"><?php echo esc_html__( 'Active', 'smart-translation-engine' ); ?></span>
+						<?php elseif ( 'expired' === $wpste_status ) : ?>
+							<span class="wpste-badge wpste-badge-expired"><?php echo esc_html__( 'Expired', 'smart-translation-engine' ); ?></span>
+							<?php if ( $wpste_grace ) : ?>
+								<span class="description">
+									<?php
+									$wpste_days_left = max( 0, 5 - (int) floor( ( time() - strtotime( $wpste_grace ) ) / DAY_IN_SECONDS ) );
+									echo esc_html(
+										sprintf(
+											/* translators: %d: number of days */
+											_n( 'Feature files will be removed in %d day.', 'Feature files will be removed in %d days.', $wpste_days_left, 'smart-translation-engine' ),
+											$wpste_days_left
+										)
+									);
+									?>
+								</span>
+							<?php endif; ?>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'Plan', 'smart-translation-engine' ); ?></th>
+					<td><?php echo esc_html( ucfirst( $wpste_current_tier ) ); ?></td>
+				</tr>
+				<tr>
+					<th><?php echo esc_html__( 'License key', 'smart-translation-engine' ); ?></th>
+					<td><code><?php echo esc_html( $wpste_masked_key ); ?></code></td>
+				</tr>
+				<?php if ( $wpste_expires ) : ?>
+				<tr>
+					<th><?php echo esc_html__( 'Expires', 'smart-translation-engine' ); ?></th>
+					<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $wpste_expires ) ) ); ?></td>
+				</tr>
+				<?php endif; ?>
+			</table>
+
+			<?php
+			// Feature update notice.
+			$wpste_updates = get_transient( 'wpste_feature_updates' );
+			if ( ! empty( $wpste_updates ) ) :
+				?>
+				<div class="notice notice-warning inline">
+					<p>
+						<strong><?php echo esc_html__( 'Feature updates available:', 'smart-translation-engine' ); ?></strong>
+						<?php foreach ( $wpste_updates as $wpste_update ) : ?>
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: 1: feature name, 2: current version, 3: new version */
+									__( '%1$s (%2$s → %3$s)', 'smart-translation-engine' ),
+									$wpste_update['name'],
+									$wpste_update['local_version'],
+									$wpste_update['server_version']
+								)
+							);
+							?>
+						<?php endforeach; ?>
+						&nbsp;
+						<button type="button" class="button button-small" id="wpste-update-features">
+							<?php echo esc_html__( 'Update now', 'smart-translation-engine' ); ?>
+						</button>
+					</p>
+				</div>
+			<?php endif; ?>
+
+		<?php endif; ?>
+
+		<!-- Manual license key activation -->
+		<div class="wpste-activate-form">
+			<h3><?php echo 'free' === $wpste_current_tier ? esc_html__( 'Have a license key?', 'smart-translation-engine' ) : esc_html__( 'Re-activate license', 'smart-translation-engine' ); ?></h3>
+			<p>
+				<input
+					type="text"
+					id="wpste-license-key-input"
+					class="regular-text"
+					placeholder="WPSTE-PRO-XXXX-XXXX-XXXX-XXXX"
+					autocomplete="off"
+				/>
+				<button type="button" class="button button-primary" id="wpste-activate-license-btn">
+					<?php echo esc_html__( 'Activate', 'smart-translation-engine' ); ?>
+				</button>
+			</p>
+			<div id="wpste-activation-result"></div>
+		</div>
+	</div>
+	<!-- /License Management -->
+
 	<?php if ( $wpste_current_tier === 'free' ) : ?>
 		<div class="notice notice-info">
 			<p>
@@ -579,6 +690,55 @@ input:checked + .slider:before {
 	border: 1px solid #ddd;
 	border-radius: 8px;
 }
+
+/* License box */
+.wpste-license-box {
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 20px 25px;
+	margin-bottom: 30px;
+}
+
+.wpste-license-box h2 {
+	margin-top: 0;
+}
+
+.wpste-license-table th {
+	width: 140px;
+}
+
+.wpste-badge {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 10px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.wpste-badge-active {
+	background: #d7f0e0;
+	color: #00662b;
+}
+
+.wpste-badge-expired {
+	background: #fde8e8;
+	color: #a00;
+}
+
+.wpste-activate-form {
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid #eee;
+}
+
+.wpste-activate-form h3 {
+	margin-top: 0;
+}
+
+#wpste-activation-result {
+	margin-top: 10px;
+}
 </style>
 
 <script>
@@ -663,6 +823,66 @@ jQuery(document).ready(function($) {
 
 		// Store original button text for restoration
 		$button.data('original-text', $button.html());
+	});
+
+	// Manual license activation
+	$('#wpste-activate-license-btn').on('click', function() {
+		const key = $('#wpste-license-key-input').val().trim();
+		const $btn = $(this);
+		const $result = $('#wpste-activation-result');
+
+		if (!key) {
+			$result.html('<p class="notice notice-error inline"><strong><?php echo esc_js( __( 'Please enter a license key.', 'smart-translation-engine' ) ); ?></strong></p>');
+			return;
+		}
+
+		$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Activating...', 'smart-translation-engine' ) ); ?>');
+		$result.html('');
+
+		$.ajax({
+			url: ajaxurl,
+			method: 'POST',
+			data: {
+				action: 'wpste_activate_license',
+				nonce: '<?php echo esc_js( wp_create_nonce( 'wpste_activate_license' ) ); ?>',
+				license_key: key,
+			},
+			success: function(response) {
+				if (response.success) {
+					$result.html('<p class="notice notice-success inline"><strong><?php echo esc_js( __( 'License activated! Reloading...', 'smart-translation-engine' ) ); ?></strong></p>');
+					setTimeout(function() { location.reload(); }, 1500);
+				} else {
+					const msg = response.data && response.data.message ? response.data.message : '<?php echo esc_js( __( 'Activation failed.', 'smart-translation-engine' ) ); ?>';
+					$result.html('<p class="notice notice-error inline"><strong>' + msg + '</strong></p>');
+					$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Activate', 'smart-translation-engine' ) ); ?>');
+				}
+			},
+			error: function() {
+				$result.html('<p class="notice notice-error inline"><strong><?php echo esc_js( __( 'Network error. Please try again.', 'smart-translation-engine' ) ); ?></strong></p>');
+				$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Activate', 'smart-translation-engine' ) ); ?>');
+			}
+		});
+	});
+
+	// Feature update button
+	$('#wpste-update-features').on('click', function() {
+		const $btn = $(this);
+		$btn.prop('disabled', true).text('<?php echo esc_js( __( 'Updating...', 'smart-translation-engine' ) ); ?>');
+
+		$.ajax({
+			url: ajaxurl,
+			method: 'POST',
+			data: {
+				action: 'wpste_download_features',
+				nonce: '<?php echo esc_js( wp_create_nonce( 'wpste_download_features' ) ); ?>',
+			},
+			success: function() {
+				location.reload();
+			},
+			error: function() {
+				$btn.prop('disabled', false).text('<?php echo esc_js( __( 'Update now', 'smart-translation-engine' ) ); ?>');
+			}
+		});
 	});
 
 	// Close modal
